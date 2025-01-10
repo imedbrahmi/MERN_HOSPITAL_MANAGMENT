@@ -1,3 +1,4 @@
+// Small update for commit
 import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -41,7 +42,6 @@ const AddNewDoctor = () => {
       if (user?.role === "SuperAdmin") {
         fetchClinics();
       } else if (user?.role === "Admin") {
-        // Admin : utiliser son clinicId automatiquement
         setClinicId(user.clinicId || "");
       }
     }
@@ -87,7 +87,6 @@ const AddNewDoctor = () => {
       return toast.error("Please fill all fields correctly");
     }
 
-    // Vérifier clinicId pour SuperAdmin
     if (user?.role === "SuperAdmin" && !clinicId) {
       return toast.error("Please select a clinic");
     }
@@ -104,10 +103,11 @@ const AddNewDoctor = () => {
       formData.append("gender", gender);
       formData.append("doctorDepartment", doctorDepartment);
       formData.append("docAvatar", docAvatar);
-      // Ajouter clinicId seulement si c'est un SuperAdmin (Admin l'envoie automatiquement via son token)
+
       if (user?.role === "SuperAdmin" && clinicId) {
         formData.append("clinicId", clinicId);
       }
+
       await axios
         .post("http://localhost:4000/api/v1/user/doctor/addnew", formData, {
           withCredentials: true,
@@ -138,22 +138,23 @@ const AddNewDoctor = () => {
   if (!isAuthenticated) {
     return <Navigate to={"/login"} />;
   }
+
   return (
     <section className="page">
       <section className="container add-doctor-form">
         <img src="/logo.png" alt="logo" className="logo"/>
-        <h1 className="form-title">REGISTER A NEW DOCTOR</h1>
+        <h1 className="form-title">ADD A NEW DOCTOR</h1>
+
         <form onSubmit={handleAddNewDoctor}>
           <div className="first-wrapper">
             <div>
               <img
-                src={
-                  docAvatarPreview ? `${docAvatarPreview}` : "/docHolder.jpg"
-                }
+                src={docAvatarPreview ? `${docAvatarPreview}` : "/docHolder.jpg"}
                 alt="Doctor Avatar"
               />
               <input type="file" onChange={handleAvatar} />
             </div>
+
             <div>
               <input
                 type="text"
@@ -161,36 +162,42 @@ const AddNewDoctor = () => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
               />
+
               <input
                 type="text"
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
               />
+
               <input
                 type="text"
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
+
               <input
                 type="number"
                 placeholder="Mobile Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
+
               <input
                 type="number"
-                placeholder="CIN"
+                placeholder="CIN (ID Number)"
                 value={CIN}
                 onChange={(e) => setCIN(e.target.value)}
               />
+
               <input
-                type={"date"}
+                type="date"
                 placeholder="Date of Birth"
                 value={dob}
                 onChange={(e) => setDob(e.target.value)}
               />
+
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value)}
@@ -199,27 +206,26 @@ const AddNewDoctor = () => {
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
               </select>
+
               <input
                 type="password"
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+
               <select
                 value={doctorDepartment}
-                onChange={(e) => {
-                  setDoctorDepartment(e.target.value);
-                }}
+                onChange={(e) => setDoctorDepartment(e.target.value)}
               >
                 <option value="">Select Department</option>
-                {departmentsArray.map((depart, index) => {
-                  return (
-                    <option value={depart} key={index}>
-                      {depart}
-                    </option>
-                  );
-                })}
+                {departmentsArray.map((depart, index) => (
+                  <option value={depart} key={index}>
+                    {depart}
+                  </option>
+                ))}
               </select>
+
               {user?.role === "SuperAdmin" && (
                 <select
                   value={clinicId}
@@ -241,6 +247,7 @@ const AddNewDoctor = () => {
                   ))}
                 </select>
               )}
+
               <button type="submit">Register New Doctor</button>
             </div>
           </div>
