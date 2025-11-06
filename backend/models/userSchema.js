@@ -51,11 +51,13 @@ const userSchema = new mongoose.Schema({
         minlength: [8, "Please enter a valid password at least 8 characters long"],
         select: false,
        
+    
+    
     },
     role: {
         type: String,
         required: true,
-        enum: ["Admin", "Pacient","Doctor"],
+        enum: ["Admin", "Patient","Doctor"],
        
     },
     doctorDepartment: {
@@ -82,7 +84,8 @@ userSchema.methods.comparePassword = async function(enteredPassword){
 };
 
 userSchema.methods.generateJsonWebToken = function(){
-    return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY, { expiresIn: process.env.JWT_EXPIRES });
+    return jwt.sign({ id: this._id }, process.env.JWT_SECRET_KEY,
+         { expiresIn: process.env.JWT_EXPIRES }, { algorithm: "HS256" });
 };
-export const User = mongoose.model("Message", userSchema);
+export const User = mongoose.model("User", userSchema);
 
