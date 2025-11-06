@@ -7,6 +7,7 @@ import { connectDB } from "./database/dbConnection.js";
 import messageRouter from "./router/messageRouter.js";
 import { errorMidelware } from "./middelwares/errorMidelware.js";
 import userRouter from "./router/userRouter.js";
+import appointmentRouter from "./router/appointmentRouter.js";
 
 
 
@@ -33,6 +34,7 @@ app.use(fileUpload({
 
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/appointment", appointmentRouter);
 
 connectDB();
 
