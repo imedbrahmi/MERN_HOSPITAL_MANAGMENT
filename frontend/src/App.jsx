@@ -8,13 +8,29 @@ import Register from './pages/Register'
 import Login from './pages/Login'
 import { ToastContainer, toast } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
+import NavBar from './components/NavBar'
 
 
 
 const App =() => {
+  const {isAuthenticated,setIsAuthenticated,setUser} = useContext(Context)
+  const fetchUser = async()=>{
+    try {
+      const response = await axios.get("http://localhost:4000/api/v1/user/patient/me", {
+        withCredentials: true,
+      });
+      setIsAuthenticated(true);
+      setUser(response.data.user);
+     
+    } catch (err) {
+      setIsAuthenticated(false);
+      setUser({});
+    }
+  }
   return (
     <>
     <Router>
+      <NavBar />
       <ToastContainer position="top-center"/>
       <Routes>
         <Route path="/" element={<Home />} />
@@ -23,6 +39,7 @@ const App =() => {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
       </Routes>
+      <ToastContainer position="top-center"/>
     </Router>
     </>
   );
