@@ -1,8 +1,13 @@
 import React from 'react'
+import Hero from '../components/Hero'
+import AppointmentForm from '../components/AppointmentForm'
 
 const Appointment =() => {
   return (
-    <div></div>
+    <>
+    <Hero title={"Book an Appointment | MedFlow Institute of Health"} imageUrl={"/signin.png"}/>
+    <AppointmentForm/>
+    </>
   );
 };
 

@@ -1,10 +1,13 @@
 import React from 'react'
+import Hero from '../components/Hero'
+import Biography from '../components/Biography'
 
 const AboutUs =() => {
   return (
-    <div>
-      <h1>About Us</h1>
-    </div>
+    <>
+     <Hero title={" Learn More About Us | MedFlow Institute of Health"} imageUrl={"/about.png"}/>
+     <Biography imageUrl={"/whoweare.png"}/>
+    </>
   )
 }
 

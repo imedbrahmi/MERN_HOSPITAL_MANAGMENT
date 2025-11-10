@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Context } from '../main';
+import {GiHamburgerMenu} from 'react-icons/gi'
 
 const NavBar = () => {
     const [show, setShow] = useState(false);
@@ -34,13 +35,16 @@ const NavBar = () => {
                 <Link to="/about">ABOUT US</Link>
                
             </div>
-            {!isAuthenticated ? (
+            {isAuthenticated ? (
                 <button className='logoutBtn btn' onClick={handelLogout}>LOGOUT</button>
             ) : (
                 <button className='loginBtn btn' onClick={gotoLogin}>LOGIN</button>
             )}
         </div>
-       
+       <div className='hamburger' onClick={() => setShow(!show)}>
+       <GiHamburgerMenu/>
+
+       </div>
     </nav>
   )
 }
