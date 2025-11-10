@@ -1,35 +1,58 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import React, { useContext, useEffect } from 'react'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import { useNavigate, Link, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import Dashboard from './components/Dashboard'
+import AddNewDoctor from './components/AddNewDoctor'
+import AddNewAdmin from './components/AddNewAdmin'
+import Doctors from './components/Doctors'
+import Messages from './components/Messages'
+import SideBar from './components/SideBar'
+import Login from './components/Login'
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import { Context } from './main'
 
-function App() {
-  const [count, setCount] = useState(0)
+
+
+const App = () => {
+
+const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
+ useEffect(() => {
+  const fetchUser = async () => {
+    try {
+      const response = await axios.get('http://localhost:4000/api/v1/user/admin/me', {
+        withCredentials: true
+      })
+      setUser(response.data.user)
+      setIsAuthenticated(true)
+    } catch (error) {
+      console.log(error)
+      setIsAuthenticated(false)
+      setUser({})
+    }
+  }
+  fetchUser()
+ }, [isAuthenticated]);
+
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+    <Router>
+    <SideBar />
+      <Routes>
+        <Route path='/' element={<Dashboard />} />
+        <Route path='/login' element={<Login />} />
+        <Route path='/add-new-doctor' element={<AddNewDoctor />} />
+        <Route path='/add-new-admin' element={<AddNewAdmin />} />
+        <Route path='/doctors' element={<Doctors />} />
+        <Route path='/messages' element={<Messages />} />
+      </Routes>
+      <ToastContainer position="top-center"/>
+    </Router>
     </>
-  )
-}
+  );
+};
 
-export default App
+export default App;
