@@ -13,6 +13,7 @@ import Login from './components/Login'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { Context } from './main'
+import './App.css'
 
 
 
@@ -44,8 +45,8 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
       <Routes>
         <Route path='/' element={<Dashboard />} />
         <Route path='/login' element={<Login />} />
-        <Route path='/add-new-doctor' element={<AddNewDoctor />} />
-        <Route path='/add-new-admin' element={<AddNewAdmin />} />
+        <Route path='/doctor/addnew' element={<AddNewDoctor />} />
+        <Route path='/admin/addnew' element={<AddNewAdmin />} />
         <Route path='/doctors' element={<Doctors />} />
         <Route path='/messages' element={<Messages />} />
       </Routes>

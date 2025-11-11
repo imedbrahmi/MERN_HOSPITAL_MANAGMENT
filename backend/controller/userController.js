@@ -58,16 +58,16 @@ export const login = chatchAsyncErrors(async (req, res, next) => {
 });
 
 export const addNewAdmin = chatchAsyncErrors(async (req, res, next) => {
-const { firstName, lastName, phone, CIN, email, dob, gender, password, role } = req.body;
+const { firstName, lastName, phone, CIN, email, dob, gender, password} = req.body;
 
-if(!firstName || !lastName || !phone || !CIN || !email || !dob || !gender || !password || !role) {
-    return next(new ErrorHandler("Please fill all fields", 400));
+if(!firstName || !lastName || !phone || !CIN || !email || !dob || !gender || !password) {
+    return next(new ErrorHandler("Please fill all fieldsssss", 400));
 }
 const isRegistered = await User.findOne({ email });
 if(isRegistered){
     return next(new ErrorHandler(`${isRegistered.role}  already exist with this email`, 400));
 }
-const admin = await User.create({ firstName, lastName, phone, CIN, email, dob, gender, password, role });
+const admin = await User.create({ firstName, lastName, phone, CIN, email, dob, gender, password, role:'Admin' });
 return res.status(200).json({
     success: true,
     message: "Admin created successfully",

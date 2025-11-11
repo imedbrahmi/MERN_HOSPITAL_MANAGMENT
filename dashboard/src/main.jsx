@@ -1,4 +1,4 @@
-import React from "react";
+import React, { createContext, useState, StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 
@@ -17,7 +17,7 @@ const AppWrapper = () => {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(
-  <ReactStrictMode>
+  <StrictMode>
     <AppWrapper />
-  </ReactStrictMode>,
+  </StrictMode>
 )

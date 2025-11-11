@@ -43,7 +43,7 @@ const Login = () => {
   };
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={"/"} />;
   }
 
   return (
