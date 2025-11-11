@@ -654,3 +654,7 @@ input[type="time"]:before {
   border-radius: 20px;
   border: 2px solid #9083d5;
 }
+.dashboard .banner:first-child .firstBox .content div span.admin-name {
+  color: #ff008d;
+  font-weight: 700;
+}
