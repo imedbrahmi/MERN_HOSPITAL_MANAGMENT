@@ -103,14 +103,14 @@ export const getAvailableSlots = chatchAsyncErrors(async (req, res, next) => {
     const selectedDate = new Date(date);
     const dayOfWeek = selectedDate.toLocaleDateString('en-US', { weekday: 'long' });
 
-    // Récupérer le schedule pour ce jour
-    const schedule = await Schedule.findOne({
+    // Récupérer TOUS les schedules pour ce jour (un docteur peut avoir plusieurs créneaux)
+    const schedules = await Schedule.find({
         doctorId,
         dayOfWeek,
         isAvailable: true,
-    });
+    }).sort({ startTime: 1 });
 
-    if (!schedule) {
+    if (!schedules || schedules.length === 0) {
         return res.status(200).json({
             success: true,
             message: "No available slots for this day",
@@ -122,58 +122,80 @@ export const getAvailableSlots = chatchAsyncErrors(async (req, res, next) => {
     const { Appointment } = await import("../models/appointmentSchema.js");
     const existingAppointments = await Appointment.find({
         doctorId,
-        appointment_date: date,
+        appointment_date: { $regex: `^${date}` }, // Chercher les appointments qui commencent par cette date
         status: { $in: ["Pending", "Accepted"] },
     });
 
-    // Générer les créneaux disponibles
-    const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
-    const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
-    const duration = schedule.duration;
-
+    // Générer les créneaux disponibles pour TOUS les schedules de ce jour
     const availableSlots = [];
-    let currentHour = startHour;
-    let currentMinute = startMinute;
+    
+    schedules.forEach(schedule => {
+        const [startHour, startMinute] = schedule.startTime.split(':').map(Number);
+        const [endHour, endMinute] = schedule.endTime.split(':').map(Number);
+        const duration = schedule.duration;
 
-    while (
-        currentHour < endHour ||
-        (currentHour === endHour && currentMinute + duration <= endMinute)
-    ) {
-        const slotTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-        const slotDateTime = `${date} ${slotTime}`;
+        let currentHour = startHour;
+        let currentMinute = startMinute;
 
-        // Vérifier si ce créneau est déjà pris
-        const isBooked = existingAppointments.some(apt => {
-            const aptTime = apt.appointment_date.split(' ')[1] || apt.appointment_date;
-            return aptTime === slotTime;
-        });
+        while (
+            currentHour < endHour ||
+            (currentHour === endHour && currentMinute + duration <= endMinute)
+        ) {
+            const slotTime = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+            const slotDateTime = `${date} ${slotTime}`;
 
-        if (!isBooked) {
-            availableSlots.push({
-                time: slotTime,
-                dateTime: slotDateTime,
-                duration: duration,
+            // Vérifier si ce créneau est déjà pris
+            const isBooked = existingAppointments.some(apt => {
+                // Extraire l'heure de l'appointment
+                let aptTime = '';
+                if (apt.appointment_date) {
+                    if (apt.appointment_date.includes('T')) {
+                        aptTime = apt.appointment_date.split('T')[1]?.substring(0, 5) || '';
+                    } else if (apt.appointment_date.includes(' ')) {
+                        aptTime = apt.appointment_date.split(' ')[1]?.substring(0, 5) || '';
+                    }
+                }
+                return aptTime === slotTime;
             });
-        }
 
-        // Passer au créneau suivant
-        currentMinute += duration;
-        if (currentMinute >= 60) {
-            currentHour += Math.floor(currentMinute / 60);
-            currentMinute = currentMinute % 60;
+            if (!isBooked) {
+                // Vérifier que ce créneau n'est pas déjà dans la liste (éviter les doublons)
+                if (!availableSlots.some(slot => slot.time === slotTime)) {
+                    availableSlots.push({
+                        time: slotTime,
+                        dateTime: slotDateTime,
+                        duration: duration,
+                    });
+                }
+            }
+
+            // Passer au créneau suivant
+            currentMinute += duration;
+            if (currentMinute >= 60) {
+                currentHour += Math.floor(currentMinute / 60);
+                currentMinute = currentMinute % 60;
+            }
         }
-    }
+    });
+
+    // Trier les créneaux par heure
+    availableSlots.sort((a, b) => {
+        const [hourA, minA] = a.time.split(':').map(Number);
+        const [hourB, minB] = b.time.split(':').map(Number);
+        if (hourA !== hourB) return hourA - hourB;
+        return minA - minB;
+    });
 
     res.status(200).json({
         success: true,
         message: "Available slots fetched successfully",
         availableSlots,
-        schedule: {
-            dayOfWeek: schedule.dayOfWeek,
-            startTime: schedule.startTime,
-            endTime: schedule.endTime,
-            duration: schedule.duration,
-        },
+        schedules: schedules.map(s => ({
+            dayOfWeek: s.dayOfWeek,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            duration: s.duration,
+        })),
     });
 });
 

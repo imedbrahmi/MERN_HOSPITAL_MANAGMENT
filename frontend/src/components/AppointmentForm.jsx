@@ -381,9 +381,9 @@ const AppointmentForm = () => {
                 gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
                 gap: '10px' 
               }}>
-                {availableSlots.map((slot, index) => (
+                {availableSlots.map((slot) => (
                   <button
-                    key={index}
+                    key={slot.time}
                     type="button"
                     onClick={() => {
                       setSelectedTimeSlot(slot.time);
