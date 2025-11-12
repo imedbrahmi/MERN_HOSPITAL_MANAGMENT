@@ -15,7 +15,7 @@ const router = express.Router();
 router.post("/create", isAuthenticated, requireRole(['Doctor']), createSchedule);
 router.get("/my-schedule", isAuthenticated, requireRole(['Doctor']), getMySchedule);
 router.get("/doctor/:doctorId", isAuthenticated, requireRole(['Doctor', 'Admin', 'Receptionist', 'SuperAdmin']), getDoctorSchedules);
-router.get("/available/:doctorId", isAuthenticated, getAvailableSlots); // Public pour le frontend
+router.get("/available/:doctorId", getAvailableSlots); // Public pour le frontend (pas besoin d'authentification)
 router.put("/:id", isAuthenticated, requireRole(['Doctor', 'Admin', 'Receptionist', 'SuperAdmin']), updateSchedule);
 router.delete("/:id", isAuthenticated, requireRole(['Doctor', 'Admin', 'Receptionist', 'SuperAdmin']), deleteSchedule);
 

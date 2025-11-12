@@ -27,6 +27,10 @@ const AppointmentForm = () => {
     const [clinics, setClinics] = useState([]);
     const [doctors, setDoctors] = useState([]);
     const [availableDepartments, setAvailableDepartments] = useState([]);
+    const [selectedDoctorId, setSelectedDoctorId] = useState('');
+    const [availableSlots, setAvailableSlots] = useState([]);
+    const [selectedTimeSlot, setSelectedTimeSlot] = useState('');
+    const [loadingSlots, setLoadingSlots] = useState(false);
     
     // Récupérer la liste des cliniques au chargement
     useEffect(() => {
@@ -92,7 +96,17 @@ const AppointmentForm = () => {
         try {
             const hasVisitedBool = Boolean(hasVisited);
             
-            // Préparer les données
+            // Vérifier qu'un créneau horaire a été sélectionné
+            if (!selectedTimeSlot) {
+                toast.error('Please select an available time slot');
+                return;
+            }
+            
+            // Préparer les données avec la date + heure complète
+            // Format: YYYY-MM-DD HH:MM
+            const dateOnly = appointmentDate.split('T')[0] || appointmentDate.split(' ')[0];
+            const fullDateTime = `${dateOnly} ${selectedTimeSlot}`;
+            
             const appointmentData = {
                 firstName,
                 lastName,
@@ -101,7 +115,7 @@ const AppointmentForm = () => {
                 email,
                 dob,
                 gender, 
-                appointment_date: appointmentDate,
+                appointment_date: fullDateTime,
                 department,
                 doctor_firstName: doctorFirstName,
                 doctor_lastName: doctorLastName || "", // Permettre lastName vide
@@ -133,6 +147,9 @@ const AppointmentForm = () => {
             setHasVisited(false);
             setAddress('');
             setClinicName('');
+            setSelectedDoctorId('');
+            setAvailableSlots([]);
+            setSelectedTimeSlot('');
         } catch (error) {
             const errorMessage = error.response?.data?.message || 'Failed to book appointment';
             toast.error(errorMessage);
@@ -212,14 +229,44 @@ const AppointmentForm = () => {
           <input
             type={appointmentDate ? 'date' : 'text'}
             placeholder='Appointment Date'
-            value={appointmentDate}
+            value={appointmentDate.split(' ')[0] || appointmentDate}
             onFocus={(e) => (e.target.type = 'date')}
             onBlur={(e) => {
               if (!e.target.value) {
                 e.target.type = 'text';
               }
             }}
-            onChange={(e) => setAppointmentDate(e.target.value)}
+            onChange={async (e) => {
+              const selectedDate = e.target.value;
+              setAppointmentDate(selectedDate);
+              setSelectedTimeSlot('');
+              
+              // Si un docteur est sélectionné et une date est choisie, récupérer les créneaux disponibles
+              if (selectedDoctorId && selectedDate) {
+                setLoadingSlots(true);
+                try {
+                  const { data } = await axios.get(
+                    `http://localhost:4000/api/v1/schedule/available/${selectedDoctorId}?date=${selectedDate}`
+                  );
+                  setAvailableSlots(data.availableSlots || []);
+                  if (data.availableSlots && data.availableSlots.length === 0) {
+                    toast.info('No available time slots for this date');
+                  }
+                } catch (error) {
+                  console.error('Error fetching available slots:', error);
+                  setAvailableSlots([]);
+                  if (error.response?.status !== 200) {
+                    toast.error('Failed to fetch available time slots');
+                  }
+                } finally {
+                  setLoadingSlots(false);
+                }
+              } else {
+                setAvailableSlots([]);
+              }
+            }}
+            disabled={!selectedDoctorId}
+            min={new Date().toISOString().split('T')[0]}
           />
         </div>
         <div>
@@ -263,10 +310,30 @@ const AppointmentForm = () => {
                 const parts = fullName.split(' ');
                 setDoctorFirstName(parts[0] || '');
                 setDoctorLastName(parts.slice(1).join(' ') || '');
+                
+                // Trouver le doctorId correspondant
+                const selectedDoctor = doctors
+                  .filter((doctor) => doctor.doctorDepartment === department)
+                  .find((doctor) => {
+                    const doctorFullName = `${doctor.firstName} ${doctor.lastName || ''}`.trim();
+                    return doctorFullName === fullName;
+                  });
+                
+                if (selectedDoctor) {
+                  setSelectedDoctorId(selectedDoctor._id);
+                } else {
+                  setSelectedDoctorId('');
+                }
               } else {
                 setDoctorFirstName('');
                 setDoctorLastName('');
+                setSelectedDoctorId('');
               }
+              
+              // Réinitialiser les créneaux et la date
+              setAvailableSlots([]);
+              setSelectedTimeSlot('');
+              setAppointmentDate('');
             }}
             disabled={!department || !clinicName}
             required
@@ -287,6 +354,85 @@ const AppointmentForm = () => {
               })}
           </select>
         </div>
+        
+        {/* Affichage des créneaux disponibles */}
+        {selectedDoctorId && appointmentDate && (
+          <div style={{ 
+            marginTop: '20px', 
+            padding: '20px', 
+            backgroundColor: '#f8f9fa', 
+            borderRadius: '8px',
+            border: '2px solid #e0e0e0'
+          }}>
+            <label style={{ 
+              fontSize: '16px', 
+              fontWeight: '600', 
+              color: '#333', 
+              marginBottom: '15px', 
+              display: 'block' 
+            }}>
+              Available Time Slots *
+            </label>
+            {loadingSlots ? (
+              <p style={{ color: '#666' }}>Loading available slots...</p>
+            ) : availableSlots.length > 0 ? (
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', 
+                gap: '10px' 
+              }}>
+                {availableSlots.map((slot, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      setSelectedTimeSlot(slot.time);
+                      // Mettre à jour appointmentDate avec la date + heure
+                      // Format: YYYY-MM-DD HH:MM
+                      const dateOnly = appointmentDate.split('T')[0] || appointmentDate.split(' ')[0];
+                      const dateTime = `${dateOnly} ${slot.time}`;
+                      setAppointmentDate(dateTime);
+                    }}
+                    style={{
+                      padding: '12px 16px',
+                      backgroundColor: selectedTimeSlot === slot.time ? '#4a90e2' : '#fff',
+                      color: selectedTimeSlot === slot.time ? '#fff' : '#333',
+                      border: `2px solid ${selectedTimeSlot === slot.time ? '#4a90e2' : '#ddd'}`,
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      transition: 'all 0.3s',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (selectedTimeSlot !== slot.time) {
+                        e.target.style.backgroundColor = '#e8f4f8';
+                        e.target.style.borderColor = '#4a90e2';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedTimeSlot !== slot.time) {
+                        e.target.style.backgroundColor = '#fff';
+                        e.target.style.borderColor = '#ddd';
+                      }
+                    }}
+                  >
+                    {slot.time}
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p style={{ color: '#e74c3c', fontWeight: '500' }}>
+                No available time slots for this date. Please select another date.
+              </p>
+            )}
+            {selectedTimeSlot && (
+              <p style={{ marginTop: '15px', color: '#27ae60', fontWeight: '600' }}>
+                Selected time: {selectedTimeSlot}
+              </p>
+            )}
+          </div>
+        )}
           
            <textarea rows='4' value={address} onChange={(e) => setAddress(e.target.value)} placeholder='Address' />
         <div
