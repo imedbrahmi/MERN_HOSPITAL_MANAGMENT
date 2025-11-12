@@ -28,11 +28,28 @@ const App = () => {
             withCredentials: true,
           }
         );
-        setIsAuthenticated(true);
-        setUser(response.data.user);
+        if (response.data && response.data.user) {
+          setIsAuthenticated(true);
+          setUser(response.data.user);
+          console.log("Patient authenticated on mount:", response.data.user);
+        } else {
+          console.log("No user data in response");
+          setIsAuthenticated(false);
+          setUser({});
+        }
       } catch (err) {
-        setIsAuthenticated(false);
-        setUser({});
+        // Si l'erreur est 401 ou 400, l'utilisateur n'est pas authentifié (normal)
+        // On ne fait rien, juste on s'assure que l'état est correct
+        const status = err.response?.status;
+        if (status === 401 || status === 400) {
+          console.log("User not authenticated (status:", status, ")");
+          setIsAuthenticated(false);
+          setUser({});
+        } else {
+          console.error("Error fetching user:", err.response?.data || err.message);
+          setIsAuthenticated(false);
+          setUser({});
+        }
       }
     };
 

@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 
 
 const Login = () => {
-  const { isAuthenticated, setIsAuthenticated } = useContext(Context);
+  const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -35,6 +35,27 @@ const Login = () => {
       );
       toast.success(response.data.message);
       setIsAuthenticated(true);
+      
+      // Utiliser directement les données de l'utilisateur retournées par le login
+      if (response.data && response.data.user) {
+        setUser(response.data.user);
+        console.log("User set after login:", response.data.user);
+      } else {
+        // Si les données ne sont pas dans la réponse, essayer de les récupérer
+        try {
+          const userResponse = await axios.get(
+            "http://localhost:4000/api/v1/user/patient/me",
+            { withCredentials: true }
+          );
+          if (userResponse.data && userResponse.data.user) {
+            setUser(userResponse.data.user);
+            console.log("User fetched after login:", userResponse.data.user);
+          }
+        } catch (userErr) {
+          console.error("Error fetching user after login:", userErr.response?.data || userErr.message);
+        }
+      }
+      
       navigateTo('/');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Login failed');

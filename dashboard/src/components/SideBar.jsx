@@ -123,6 +123,7 @@ const SideBar = () => {
          {user && user.role === 'Doctor' && (
            <>
              <MdSchedule onClick={gotoSchedulePage} title="My Schedule"/>
+             <FaUsers onClick={gotoPatientsPage} title="My Patients"/>
              <FaFileMedical onClick={gotoMedicalRecordsPage} title="Medical Records"/>
              <FaPrescription onClick={gotoPrescriptionsPage} title="Prescriptions"/>
            </>

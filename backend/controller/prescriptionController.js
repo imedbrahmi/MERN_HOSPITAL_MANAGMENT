@@ -289,13 +289,32 @@ const generatePrescriptionPDF = async (prescription, patient, doctor, PDFDocumen
     });
 };
 
-// GET /api/v1/prescription/patient/:patientId - Ordonnances d'un patient
+// GET /api/v1/prescription/patient/my-prescriptions - Mes ordonnances (Patient)
+export const getMyPrescriptions = chatchAsyncErrors(async (req, res, next) => {
+    // Seul un Patient peut voir ses propres ordonnances
+    if (req.user.role !== "Patient") {
+        return next(new ErrorHandler("Only patients can view their prescriptions", 403));
+    }
+
+    const prescriptions = await Prescription.find({ patientId: req.user._id })
+        .populate("doctorId", "firstName lastName doctorDepartment")
+        .populate("appointmentId", "appointment_date")
+        .sort({ prescriptionDate: -1 });
+
+    res.status(200).json({
+        success: true,
+        message: "Prescriptions fetched successfully",
+        prescriptions,
+    });
+});
+
+// GET /api/v1/prescription/patient/:patientId - Ordonnances d'un patient (Doctor/Admin/Receptionist)
 export const getPatientPrescriptions = chatchAsyncErrors(async (req, res, next) => {
     const { patientId } = req.params;
 
-    // Vérifier les permissions
-    if (req.user.role === "Patient" && req.user._id.toString() !== patientId) {
-        return next(new ErrorHandler("You can only view your own prescriptions", 403));
+    // Si c'est un Patient, utiliser getMyPrescriptions
+    if (req.user.role === "Patient") {
+        return getMyPrescriptions(req, res, next);
     }
 
     // Doctor peut voir les ordonnances de ses patients

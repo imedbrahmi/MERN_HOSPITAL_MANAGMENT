@@ -10,19 +10,28 @@ const MyPrescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === "Patient") {
+    console.log("MyPrescriptions - isAuthenticated:", isAuthenticated, "user:", user, "user.role:", user?.role);
+    if (isAuthenticated && user && user.role === "Patient") {
+      console.log("Fetching prescriptions for patient:", user._id);
       fetchPrescriptions();
+    } else {
+      console.log("Not authenticated or not a patient - isAuthenticated:", isAuthenticated, "user:", user);
     }
   }, [isAuthenticated, user]);
 
   const fetchPrescriptions = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/prescription/patient/${user._id}`,
+        `http://localhost:4000/api/v1/prescription/patient/my-prescriptions`,
         { withCredentials: true }
       );
+      console.log("Prescriptions data:", data);
       setPrescriptions(data.prescriptions || []);
+      if (!data.prescriptions || data.prescriptions.length === 0) {
+        console.log("No prescriptions found for this patient");
+      }
     } catch (error) {
+      console.error("Error fetching prescriptions:", error);
       toast.error(error.response?.data?.message || "Failed to fetch prescriptions");
       setPrescriptions([]);
     }

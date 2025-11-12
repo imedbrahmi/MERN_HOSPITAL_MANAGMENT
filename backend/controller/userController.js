@@ -6,6 +6,7 @@ import { Clinic } from "../models/clinicSchema.js";
 import { Appointment } from "../models/appointmentSchema.js";
 import { generateToken } from "../utils/jwtToken.js";
 import cloudinary from "cloudinary";
+import mongoose from "mongoose";
 
 export const pacientRegister = chatchAsyncErrors(async (req, res, next) => {
     if (!req.body) {
@@ -173,15 +174,50 @@ export const addNewReceptionist = chatchAsyncErrors(async (req, res, next) => {
 
 export const getAllDoctors = chatchAsyncErrors(async (req, res, next) => {
     // Isolation multi-tenant : SuperAdmin voit tous les docteurs, Admin/Receptionist voit seulement ceux de sa clinique
-    const query = { role: "Doctor" };
+    const query = { 
+        role: "Doctor",
+        // Filtrer par isActive seulement si défini (pour éviter de ne rien retourner si isActive n'existe pas)
+        // On inclut les docteurs où isActive est true OU undefined/null (pour compatibilité)
+        $or: [
+            { isActive: true },
+            { isActive: { $exists: false } },
+            { isActive: null }
+        ]
+    };
     
     if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
         // Admin et Receptionist : filtrer par sa clinique
         query.clinicId = req.user.clinicId;
     }
-    // SuperAdmin : pas de filtre, voit tous les docteurs
+    // SuperAdmin : pas de filtre clinicId, voit tous les docteurs
     
-    const doctors = await User.find(query);
+    // Recherche par nom si fournie
+    if (req.query.search) {
+        const searchRegex = new RegExp(req.query.search, 'i');
+        // Utiliser $and pour combiner les conditions
+        query.$and = [
+            { $or: [
+                { isActive: true },
+                { isActive: { $exists: false } },
+                { isActive: null }
+            ]},
+            { $or: [
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { email: searchRegex },
+                { doctorDepartment: searchRegex }
+            ]}
+        ];
+        // Supprimer le $or initial car on l'a déplacé dans $and
+        delete query.$or;
+    }
+    
+    // Filtre par département si fourni
+    if (req.query.department) {
+        query.doctorDepartment = req.query.department;
+    }
+    
+    const doctors = await User.find(query).sort({ firstName: 1, lastName: 1 });
     res.status(200).json({
         success: true,
         message: "Doctors fetched successfully",
@@ -222,26 +258,109 @@ export const getDoctorsByClinic = chatchAsyncErrors(async (req, res, next) => {
 
 // GET /api/v1/user/patients - Récupère les patients (avec isolation multi-tenant)
 export const getAllPatients = chatchAsyncErrors(async (req, res, next) => {
-    // Isolation multi-tenant : SuperAdmin voit tous les patients, Admin/Receptionist voit seulement ceux qui ont des rendez-vous dans sa clinique
+    // Isolation multi-tenant : SuperAdmin voit tous les patients, Admin/Receptionist voit seulement ceux qui ont des rendez-vous dans sa clinique, Doctor voit seulement ses propres patients
     let patients = [];
     
-    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
-        // Admin et Receptionist : récupérer les patients qui ont des rendez-vous dans sa clinique
-        const appointments = await Appointment.find({ 
-            clinicId: req.user.clinicId 
-        }).select("patientId").distinct("patientId");
+    if (req.user.role === "SuperAdmin") {
+        // SuperAdmin : voir tous les patients directement
+        // Inclure les patients où isActive est true OU undefined/null (pour compatibilité)
+        const query = { 
+            role: "Patient"
+        };
         
-        // Récupérer les patients uniques
-        if (appointments.length > 0) {
-            patients = await User.find({ 
-                _id: { $in: appointments },
-                role: "Patient"
-            }).select("firstName lastName email phone CIN dob gender");
+        // Construire les conditions $or pour isActive
+        const isActiveConditions = [
+            { isActive: true },
+            { isActive: { $exists: false } },
+            { isActive: null }
+        ];
+        
+        // Recherche par nom si fournie
+        if (req.query.search) {
+            const searchRegex = new RegExp(req.query.search, 'i');
+            const searchConditions = [
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { email: searchRegex },
+                { phone: searchRegex },
+                { CIN: searchRegex }
+            ];
+            // Combiner les conditions avec $and
+            query.$and = [
+                { $or: isActiveConditions },
+                { $or: searchConditions }
+            ];
+        } else {
+            // Pas de recherche, juste les conditions isActive
+            query.$or = isActiveConditions;
         }
-    } else if (req.user.role === "SuperAdmin") {
-        // SuperAdmin : voir tous les patients
-        patients = await User.find({ role: "Patient" })
-            .select("firstName lastName email phone CIN dob gender");
+        
+        patients = await User.find(query)
+            .select("firstName lastName email phone CIN dob gender")
+            .sort({ firstName: 1, lastName: 1 });
+    } else {
+        // Pour Doctor, Admin, Receptionist : utiliser la logique avec appointments
+        let patientIds = [];
+        
+        if (req.user.role === "Doctor") {
+            // Doctor : récupérer les patients qui ont des rendez-vous avec ce docteur
+            const appointments = await Appointment.find({ 
+                doctorId: req.user._id 
+            }).select("patientId").lean();
+            
+            // Extraire les IDs uniques des patients
+            const uniquePatientIds = [...new Set(appointments.map(apt => apt.patientId?.toString()).filter(Boolean))];
+            patientIds = uniquePatientIds.map(id => new mongoose.Types.ObjectId(id));
+        } else if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+            // Admin et Receptionist : récupérer les patients qui ont des rendez-vous dans sa clinique
+            const appointments = await Appointment.find({ 
+                clinicId: req.user.clinicId 
+            }).select("patientId").lean();
+            
+            // Extraire les IDs uniques des patients
+            const uniquePatientIds = [...new Set(appointments.map(apt => apt.patientId?.toString()).filter(Boolean))];
+            patientIds = uniquePatientIds.map(id => new mongoose.Types.ObjectId(id));
+        }
+        
+        // Construire la query
+        // Inclure les patients où isActive est true OU undefined/null (pour compatibilité)
+        const isActiveConditions = [
+            { isActive: true },
+            { isActive: { $exists: false } },
+            { isActive: null }
+        ];
+        
+        const query = { 
+            _id: { $in: patientIds },
+            role: "Patient"
+        };
+        
+        // Recherche par nom si fournie
+        if (req.query.search) {
+            const searchRegex = new RegExp(req.query.search, 'i');
+            const searchConditions = [
+                { firstName: searchRegex },
+                { lastName: searchRegex },
+                { email: searchRegex },
+                { phone: searchRegex },
+                { CIN: searchRegex }
+            ];
+            // Combiner les conditions avec $and
+            query.$and = [
+                { $or: isActiveConditions },
+                { $or: searchConditions }
+            ];
+        } else {
+            // Pas de recherche, juste les conditions isActive
+            query.$or = isActiveConditions;
+        }
+        
+        // Récupérer les patients
+        if (patientIds.length > 0) {
+            patients = await User.find(query)
+                .select("firstName lastName email phone CIN dob gender")
+                .sort({ firstName: 1, lastName: 1 });
+        }
     }
     
     res.status(200).json({
@@ -385,5 +504,211 @@ export const addNewDoctor = chatchAsyncErrors(async (req, res, next) => {
         success: true,
         message: "New Doctor created successfully",
         doctor,
+    });
+});
+
+// PUT /api/v1/user/doctor/:id - Modifier un Doctor
+export const updateDoctor = chatchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    let doctor = await User.findById(id);
+
+    if (!doctor || doctor.role !== "Doctor") {
+        return next(new ErrorHandler("Doctor not found", 404));
+    }
+
+    // Vérification multi-tenant : Admin ne peut modifier que les docteurs de sa clinique
+    if (req.user.role === "Admin" && req.user.clinicId) {
+        if (doctor.clinicId?.toString() !== req.user.clinicId.toString()) {
+            return next(new ErrorHandler("You can only update doctors in your clinic", 403));
+        }
+    }
+
+    // Gestion de la photo si fournie
+    if (req.files && req.files.docAvatar) {
+        const { docAvatar } = req.files;
+        const allowedExtensions = ["image/jpg", "image/jpeg", "image/png", "image/gif", "image/webp"];
+        if (!allowedExtensions.includes(docAvatar.mimetype)) {
+            return next(new ErrorHandler("Please upload a valid image", 400));
+        }
+
+        // Supprimer l'ancienne photo de Cloudinary
+        if (doctor.docAvatar?.public_id) {
+            await cloudinary.uploader.destroy(doctor.docAvatar.public_id);
+        }
+
+        // Uploader la nouvelle photo
+        const cloudinaryResponse = await cloudinary.uploader.upload(docAvatar.tempFilePath);
+        if (!cloudinaryResponse || cloudinaryResponse.error) {
+            return next(new ErrorHandler(cloudinaryResponse?.error?.message || "Failed to upload image to Cloudinary", 500));
+        }
+
+        req.body.docAvatar = {
+            public_id: cloudinaryResponse.public_id,
+            url: cloudinaryResponse.secure_url
+        };
+    }
+
+    // Vérifier si l'email est modifié et s'il existe déjà
+    if (req.body.email && req.body.email !== doctor.email) {
+        const emailExists = await User.findOne({ email: req.body.email });
+        if (emailExists) {
+            return next(new ErrorHandler("Email already exists", 400));
+        }
+    }
+
+    // Mettre à jour le doctor
+    doctor = await User.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Doctor updated successfully",
+        doctor,
+    });
+});
+
+// DELETE /api/v1/user/doctor/:id - Supprimer un Doctor (soft delete)
+export const deleteDoctor = chatchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    const doctor = await User.findById(id);
+
+    if (!doctor || doctor.role !== "Doctor") {
+        return next(new ErrorHandler("Doctor not found", 404));
+    }
+
+    // Vérification multi-tenant : Admin ne peut supprimer que les docteurs de sa clinique
+    if (req.user.role === "Admin" && req.user.clinicId) {
+        if (doctor.clinicId?.toString() !== req.user.clinicId.toString()) {
+            return next(new ErrorHandler("You can only delete doctors in your clinic", 403));
+        }
+    }
+
+    // Supprimer la photo de Cloudinary
+    if (doctor.docAvatar?.public_id) {
+        await cloudinary.uploader.destroy(doctor.docAvatar.public_id);
+    }
+
+    // Soft delete : marquer comme inactif
+    doctor.isActive = false;
+    await doctor.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Doctor deleted successfully",
+    });
+});
+
+// GET /api/v1/user/patient/:id - Détails complets d'un Patient
+export const getPatientById = chatchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    const patient = await User.findById(id);
+
+    if (!patient || patient.role !== "Patient") {
+        return next(new ErrorHandler("Patient not found", 404));
+    }
+
+    // Vérification multi-tenant : Doctor ne peut voir que ses propres patients
+    if (req.user.role === "Doctor") {
+        const { Appointment } = await import("../models/appointmentSchema.js");
+        const hasAppointment = await Appointment.findOne({
+            patientId: id,
+            doctorId: req.user._id
+        });
+        if (!hasAppointment) {
+            return next(new ErrorHandler("You can only view your own patients", 403));
+        }
+    } else if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        // Vérification multi-tenant : Admin/Receptionist ne peut voir que les patients de sa clinique
+        const { Appointment } = await import("../models/appointmentSchema.js");
+        const hasAppointment = await Appointment.findOne({
+            patientId: id,
+            clinicId: req.user.clinicId
+        });
+        if (!hasAppointment) {
+            return next(new ErrorHandler("You can only view patients in your clinic", 403));
+        }
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Patient fetched successfully",
+        patient,
+    });
+});
+
+// PUT /api/v1/user/patient/:id - Modifier un Patient
+export const updatePatient = chatchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    let patient = await User.findById(id);
+
+    if (!patient || patient.role !== "Patient") {
+        return next(new ErrorHandler("Patient not found", 404));
+    }
+
+    // Vérification multi-tenant : Admin/Receptionist ne peut modifier que les patients de sa clinique
+    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        const { Appointment } = await import("../models/appointmentSchema.js");
+        const hasAppointment = await Appointment.findOne({
+            patientId: id,
+            clinicId: req.user.clinicId
+        });
+        if (!hasAppointment) {
+            return next(new ErrorHandler("You can only update patients in your clinic", 403));
+        }
+    }
+
+    // Vérifier si l'email est modifié et s'il existe déjà
+    if (req.body.email && req.body.email !== patient.email) {
+        const emailExists = await User.findOne({ email: req.body.email });
+        if (emailExists) {
+            return next(new ErrorHandler("Email already exists", 400));
+        }
+    }
+
+    // Mettre à jour le patient
+    patient = await User.findByIdAndUpdate(id, req.body, {
+        new: true,
+        runValidators: true,
+        useFindAndModify: false,
+    });
+
+    res.status(200).json({
+        success: true,
+        message: "Patient updated successfully",
+        patient,
+    });
+});
+
+// DELETE /api/v1/user/patient/:id - Supprimer un Patient (soft delete)
+export const deletePatient = chatchAsyncErrors(async (req, res, next) => {
+    const { id } = req.params;
+    const patient = await User.findById(id);
+
+    if (!patient || patient.role !== "Patient") {
+        return next(new ErrorHandler("Patient not found", 404));
+    }
+
+    // Vérification multi-tenant : Admin/Receptionist ne peut supprimer que les patients de sa clinique
+    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        const { Appointment } = await import("../models/appointmentSchema.js");
+        const hasAppointment = await Appointment.findOne({
+            patientId: id,
+            clinicId: req.user.clinicId
+        });
+        if (!hasAppointment) {
+            return next(new ErrorHandler("You can only delete patients in your clinic", 403));
+        }
+    }
+
+    // Soft delete : marquer comme inactif
+    patient.isActive = false;
+    await patient.save();
+
+    res.status(200).json({
+        success: true,
+        message: "Patient deleted successfully",
     });
 });

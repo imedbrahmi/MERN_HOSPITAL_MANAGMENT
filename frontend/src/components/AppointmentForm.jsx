@@ -91,21 +91,29 @@ const AppointmentForm = () => {
         
         try {
             const hasVisitedBool = Boolean(hasVisited);
+            
+            // Préparer les données
+            const appointmentData = {
+                firstName,
+                lastName,
+                phone,
+                CIN,
+                email,
+                dob,
+                gender, 
+                appointment_date: appointmentDate,
+                department,
+                doctor_firstName: doctorFirstName,
+                doctor_lastName: doctorLastName || "", // Permettre lastName vide
+                hasVisited: hasVisitedBool,
+                address,
+                clinicName
+            };
+            
+            console.log("Sending appointment data:", appointmentData);
+            
             const {data} = await axios.post('http://localhost:4000/api/v1/appointment/post',
-                {firstName,
-                     lastName,
-                    phone,
-                    CIN,
-                    email,
-                    dob,
-                    gender, 
-                    appointment_date: appointmentDate,
-                    department,
-                    doctor_firstName: doctorFirstName,
-                    doctor_lastName: doctorLastName,
-                    hasVisited: hasVisitedBool,
-                    address,
-                    clinicName },
+                appointmentData,
                 {withCredentials: true,
                  headers: { "Content-Type": "application/json" }
                 }
@@ -248,25 +256,35 @@ const AppointmentForm = () => {
             ))}
           </select>
           <select
-            value={`${doctorFirstName} ${doctorLastName}`.trim()}
+            value={doctorFirstName ? `${doctorFirstName} ${doctorLastName || ''}`.trim() : ''}
             onChange={(e) => {
-              const [firstName, lastName = ''] = e.target.value.split(' ');
-              setDoctorFirstName(firstName);
-              setDoctorLastName(lastName);
+              const fullName = e.target.value.trim();
+              if (fullName) {
+                const parts = fullName.split(' ');
+                setDoctorFirstName(parts[0] || '');
+                setDoctorLastName(parts.slice(1).join(' ') || '');
+              } else {
+                setDoctorFirstName('');
+                setDoctorLastName('');
+              }
             }}
             disabled={!department || !clinicName}
+            required
           >
             <option value=''>Select Doctor</option>
             {doctors
               .filter((doctor) => doctor.doctorDepartment === department)
-              .map((doctor, index) => (
-                <option
-                  value={`${doctor.firstName} ${doctor.lastName}`}
-                  key={doctor._id || index}
-                >
-                  {`${doctor.firstName} ${doctor.lastName}`}
-                </option>
-              ))}
+              .map((doctor, index) => {
+                const doctorFullName = `${doctor.firstName} ${doctor.lastName || ''}`.trim();
+                return (
+                  <option
+                    value={doctorFullName}
+                    key={doctor._id || index}
+                  >
+                    {doctorFullName}
+                  </option>
+                );
+              })}
           </select>
         </div>
           

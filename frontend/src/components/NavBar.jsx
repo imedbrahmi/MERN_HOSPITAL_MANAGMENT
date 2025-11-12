@@ -7,7 +7,7 @@ import {GiHamburgerMenu} from 'react-icons/gi'
 
 const NavBar = () => {
     const [show, setShow] = useState(false);
-    const {isAuthenticated,setIsAuthenticated} = useContext(Context)
+    const {isAuthenticated, setIsAuthenticated, setUser} = useContext(Context)
     const navigateTo = useNavigate();
      const handelLogout = async() => {
         try {
@@ -24,6 +24,7 @@ const NavBar = () => {
             }
             // Toujours mettre à jour l'état local et rediriger
             setIsAuthenticated(false);
+            setUser({});
             navigateTo('/');
         } catch (err) {
             // En cas d'erreur inattendue, on nettoie quand même l'état local
@@ -43,16 +44,16 @@ const NavBar = () => {
         </div>
         <div className={show ? 'navLinks showmenu' : 'navLinks'}>
             <div className='links'>
-                <Link to="/">HOME</Link>
-                <Link to="/appointment">APPOINTMENT</Link>
+                <Link to="/" onClick={() => { setShow(false); console.log("Navigating to /"); }}>HOME</Link>
+                <Link to="/appointment" onClick={() => { setShow(false); console.log("Navigating to /appointment"); }}>APPOINTMENT</Link>
                 {isAuthenticated && (
                   <>
-                    <Link to="/my-appointments">MY APPOINTMENTS</Link>
-                    <Link to="/my-invoices">MY INVOICES</Link>
-                    <Link to="/my-prescriptions">MY PRESCRIPTIONS</Link>
+                    <Link to="/my-appointments" onClick={() => { setShow(false); console.log("Navigating to /my-appointments"); }}>MY APPOINTMENTS</Link>
+                    <Link to="/my-invoices" onClick={() => { setShow(false); console.log("Navigating to /my-invoices"); }}>MY INVOICES</Link>
+                    <Link to="/my-prescriptions" onClick={() => { setShow(false); console.log("Navigating to /my-prescriptions"); }}>MY PRESCRIPTIONS</Link>
                   </>
                 )}
-                <Link to="/about">ABOUT US</Link>
+                <Link to="/about" onClick={() => { setShow(false); console.log("Navigating to /about"); }}>ABOUT US</Link>
                
             </div>
             {isAuthenticated ? (

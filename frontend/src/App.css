@@ -482,6 +482,8 @@ nav .navLinks .links a {
   position: relative;
   display: inline-block;
   background: transparent;
+  cursor: pointer;
+  z-index: 10;
 }
 nav .navLinks .links a:hover {
   color: #fff;

@@ -10,8 +10,12 @@ const MyAppointments = () => {
   const [appointments, setAppointments] = useState([]);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === "Patient") {
+    console.log("MyAppointments - isAuthenticated:", isAuthenticated, "user:", user, "user.role:", user?.role);
+    if (isAuthenticated && user && user.role === "Patient") {
+      console.log("Fetching appointments for patient:", user._id);
       fetchAppointments();
+    } else {
+      console.log("Not authenticated or not a patient - isAuthenticated:", isAuthenticated, "user:", user);
     }
   }, [isAuthenticated, user]);
 
@@ -21,8 +25,13 @@ const MyAppointments = () => {
         `http://localhost:4000/api/v1/appointment/patient/my-appointments`,
         { withCredentials: true }
       );
+      console.log("Appointments data:", data);
       setAppointments(data.appointments || []);
+      if (!data.appointments || data.appointments.length === 0) {
+        console.log("No appointments found for this patient");
+      }
     } catch (error) {
+      console.error("Error fetching appointments:", error);
       toast.error(error.response?.data?.message || "Failed to fetch appointments");
       setAppointments([]);
     }

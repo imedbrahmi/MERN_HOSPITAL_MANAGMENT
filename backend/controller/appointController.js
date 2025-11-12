@@ -14,29 +14,93 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
 
         if(!firstName || !lastName || !phone || !CIN || !email ||
                !dob || !gender || !appointment_date || !department ||
-                !doctor_firstName || !doctor_lastName
-               || !address || !clinicName) {
-        return next(new ErrorHandler("Please fill all fields (including clinicName)", 400));
+                !doctor_firstName || !address || !clinicName) {
+        return next(new ErrorHandler("Please fill all required fields (including clinicName)", 400));
         }
+        
+        // doctor_lastName est optionnel (certains docteurs n'ont pas de lastName)
+        const doctorLastName = doctor_lastName || "";
     
     // Convertir clinicName en clinicId
     const clinicId = await getClinicIdByName(clinicName, next);
     if (!clinicId) return; // Erreur déjà gérée dans getClinicIdByName
     
-    const isConfict = await User.find({
+    // Rechercher le docteur par firstName, department et clinicId
+    // Si doctor_lastName est fourni, l'utiliser pour affiner la recherche
+    let doctorQuery = {
          firstName: doctor_firstName,
          role: "Doctor",
          doctorDepartment: department,
          clinicId: clinicId, // Vérifier que le docteur appartient à la même clinique
-         });
+    };
+    
+    // Si lastName est fourni, l'ajouter à la requête
+    if (doctorLastName) {
+        doctorQuery.lastName = doctorLastName;
+    }
+    
+    const isConfict = await User.find(doctorQuery);
         if (isConfict.length === 0) {
             return next(new ErrorHandler("Doctor not found in this clinic", 400));
         }
         if (isConfict.length > 1) {
-            return next(new ErrorHandler("Conflict: Multiple doctors found", 400));
+            return next(new ErrorHandler("Conflict: Multiple doctors found. Please specify doctor's last name.", 400));
         }
     const doctorId = isConfict[0]._id;
     const patientId = req.user._id;
+    
+    // Vérifier si le docteur a déjà un appointment à cette date/heure exacte
+    // (Vérification de base - la vérification de disponibilité via Schedule est optionnelle)
+    const existingAppointment = await Appointment.findOne({
+        doctorId: doctorId,
+        appointment_date: appointment_date,
+        status: { $in: ["Pending", "Accepted"] }
+    });
+    
+    if (existingAppointment) {
+        return next(new ErrorHandler("Doctor already has an appointment at this time", 400));
+    }
+    
+    // Vérification optionnelle de disponibilité via Schedule (seulement si un schedule existe)
+    // Cette vérification est optionnelle pour permettre la création d'appointments même sans schedule défini
+    try {
+        const { Schedule } = await import("../models/scheduleSchema.js");
+        const appointmentDate = new Date(appointment_date);
+        const dayOfWeek = appointmentDate.toLocaleDateString('en-US', { weekday: 'long' });
+        
+        // Vérifier si le docteur a un horaire pour ce jour spécifique
+        const daySchedule = await Schedule.findOne({
+            doctorId: doctorId,
+            dayOfWeek: dayOfWeek,
+            isAvailable: true
+        });
+        
+        // Si un schedule existe pour ce jour, vérifier l'heure
+        if (daySchedule) {
+            // Extraire l'heure de l'appointment si elle est fournie
+            if (appointment_date.includes('T') || appointment_date.includes(' ')) {
+                let appointmentTimeStr = appointment_date;
+                if (appointment_date.includes('T')) {
+                    appointmentTimeStr = appointment_date.split('T')[1];
+                } else if (appointment_date.includes(' ')) {
+                    appointmentTimeStr = appointment_date.split(' ')[1];
+                }
+                
+                // Comparer les heures (format HH:MM) seulement si l'heure est fournie
+                if (appointmentTimeStr && appointmentTimeStr.length >= 5) {
+                    const appointmentTime = appointmentTimeStr.substring(0, 5);
+                    if (appointmentTime < daySchedule.startTime || appointmentTime > daySchedule.endTime) {
+                        return next(new ErrorHandler(`Doctor is only available between ${daySchedule.startTime} and ${daySchedule.endTime} on ${dayOfWeek}`, 400));
+                    }
+                }
+            }
+        }
+        // Si pas de schedule pour ce jour, on permet quand même la création (le docteur peut être disponible)
+    } catch (scheduleError) {
+        // Si l'import de Schedule échoue ou s'il n'y a pas de schedule, on continue quand même
+        console.log("Schedule check skipped:", scheduleError.message);
+    }
+    
     const appointment = await Appointment.create({
         firstName,
         lastName,
@@ -49,7 +113,7 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
         department,
         doctor: {
             firstName: doctor_firstName,
-            lastName: doctor_lastName,
+            lastName: doctorLastName,
         },
         doctorId,
         patientId,

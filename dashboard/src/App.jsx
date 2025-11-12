@@ -20,6 +20,9 @@ import Login from './components/Login'
 import Clinics from './components/Clinics'
 import EditClinic from './components/EditClinic'
 import Onboarding from './components/Onboarding'
+import EditDoctor from './components/EditDoctor'
+import EditPatient from './components/EditPatient'
+import PatientDetails from './components/PatientDetails'
 import RouteGuard from './components/RouteGuard'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -80,9 +83,24 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
             <Doctors />
           </RouteGuard>
         } />
+        <Route path='/doctor/edit/:id' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin']}>
+            <EditDoctor />
+          </RouteGuard>
+        } />
         <Route path='/patients' element={
-          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist']}>
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist', 'Doctor']}>
             <Patients />
+          </RouteGuard>
+        } />
+        <Route path='/patient/edit/:id' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist']}>
+            <EditPatient />
+          </RouteGuard>
+        } />
+        <Route path='/patient/details/:id' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist', 'Doctor']}>
+            <PatientDetails />
           </RouteGuard>
         } />
         <Route path='/messages' element={

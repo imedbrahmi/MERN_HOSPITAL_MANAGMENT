@@ -119,109 +119,255 @@ const Prescriptions = () => {
           className="card"
           style={{
             backgroundColor: "#ffffff",
-            padding: "30px",
+            padding: "40px",
             borderRadius: "15px",
             boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
             marginBottom: "30px",
           }}
         >
-          <h3>Create New Prescription</h3>
-          <form onSubmit={handleSubmit} className="add-admin-form">
-            <select
-              value={formData.patientId}
-              onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-              required
-            >
-              <option value="">Select Patient</option>
-              {patients.map((patient) => (
-                <option key={patient._id} value={patient._id}>
-                  {patient.firstName} {patient.lastName || ""} - {patient.email}
-                </option>
-              ))}
-            </select>
+          <h3 style={{ fontSize: "28px", marginBottom: "30px", color: "#333", fontWeight: "600" }}>Create New Prescription</h3>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ fontSize: "16px", fontWeight: "600", color: "#333" }}>Patient *</label>
+              <select
+                value={formData.patientId}
+                onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                required
+                style={{
+                  padding: "15px 20px",
+                  fontSize: "16px",
+                  border: "2px solid #ddd",
+                  borderRadius: "8px",
+                  backgroundColor: "#fff",
+                  color: "#333",
+                  cursor: "pointer",
+                  transition: "border-color 0.3s",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                onBlur={(e) => e.target.style.borderColor = "#ddd"}
+              >
+                <option value="">Select Patient</option>
+                {patients.map((patient) => (
+                  <option key={patient._id} value={patient._id}>
+                    {patient.firstName} {patient.lastName || ""} - {patient.email}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-            <h4>Medications</h4>
-            {formData.medications.map((med, index) => (
-              <div key={index} style={{ border: "1px solid #ddd", padding: "15px", marginBottom: "15px", borderRadius: "5px" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "10px" }}>
-                  <strong>Medication {index + 1}</strong>
-                  {formData.medications.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveMedication(index)}
-                      style={{
-                        padding: "5px 10px",
-                        backgroundColor: "#e74c3c",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "3px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Remove
-                    </button>
-                  )}
+            <div style={{ marginTop: "20px" }}>
+              <h4 style={{ fontSize: "20px", marginBottom: "20px", color: "#333", fontWeight: "600" }}>Medications</h4>
+              {formData.medications.map((med, index) => (
+                <div 
+                  key={index} 
+                  style={{ 
+                    border: "2px solid #e0e0e0", 
+                    padding: "25px", 
+                    marginBottom: "20px", 
+                    borderRadius: "10px",
+                    backgroundColor: "#fafafa"
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
+                    <strong style={{ fontSize: "18px", color: "#333" }}>Medication {index + 1}</strong>
+                    {formData.medications.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveMedication(index)}
+                        style={{
+                          padding: "8px 16px",
+                          backgroundColor: "#e74c3c",
+                          color: "white",
+                          border: "none",
+                          borderRadius: "6px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                          transition: "background-color 0.3s",
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = "#c0392b"}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = "#e74c3c"}
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Medication Name *</label>
+                      <input
+                        type="text"
+                        placeholder="Enter medication name"
+                        value={med.name}
+                        onChange={(e) => handleMedicationChange(index, "name", e.target.value)}
+                        required
+                        style={{
+                          padding: "15px 20px",
+                          fontSize: "16px",
+                          border: "2px solid #ddd",
+                          borderRadius: "8px",
+                          backgroundColor: "#fff",
+                          color: "#333",
+                          transition: "border-color 0.3s",
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                        onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                      />
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Dosage *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., 500mg"
+                          value={med.dosage}
+                          onChange={(e) => handleMedicationChange(index, "dosage", e.target.value)}
+                          required
+                          style={{
+                            padding: "15px 20px",
+                            fontSize: "16px",
+                            border: "2px solid #ddd",
+                            borderRadius: "8px",
+                            backgroundColor: "#fff",
+                            color: "#333",
+                            transition: "border-color 0.3s",
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                          onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Frequency *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., 3 times a day"
+                          value={med.frequency}
+                          onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                          required
+                          style={{
+                            padding: "15px 20px",
+                            fontSize: "16px",
+                            border: "2px solid #ddd",
+                            borderRadius: "8px",
+                            backgroundColor: "#fff",
+                            color: "#333",
+                            transition: "border-color 0.3s",
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                          onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                        />
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Duration *</label>
+                        <input
+                          type="text"
+                          placeholder="e.g., 7 days"
+                          value={med.duration}
+                          onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                          required
+                          style={{
+                            padding: "15px 20px",
+                            fontSize: "16px",
+                            border: "2px solid #ddd",
+                            borderRadius: "8px",
+                            backgroundColor: "#fff",
+                            color: "#333",
+                            transition: "border-color 0.3s",
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                          onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                        <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Instructions (optional)</label>
+                        <input
+                          type="text"
+                          placeholder="Additional instructions"
+                          value={med.instructions}
+                          onChange={(e) => handleMedicationChange(index, "instructions", e.target.value)}
+                          style={{
+                            padding: "15px 20px",
+                            fontSize: "16px",
+                            border: "2px solid #ddd",
+                            borderRadius: "8px",
+                            backgroundColor: "#fff",
+                            color: "#333",
+                            transition: "border-color 0.3s",
+                          }}
+                          onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                          onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <input
-                  type="text"
-                  placeholder="Medication Name *"
-                  value={med.name}
-                  onChange={(e) => handleMedicationChange(index, "name", e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Dosage (e.g., 500mg) *"
-                  value={med.dosage}
-                  onChange={(e) => handleMedicationChange(index, "dosage", e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Frequency (e.g., 3 times a day) *"
-                  value={med.frequency}
-                  onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Duration (e.g., 7 days) *"
-                  value={med.duration}
-                  onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
-                  required
-                />
-                <input
-                  type="text"
-                  placeholder="Instructions (optional)"
-                  value={med.instructions}
-                  onChange={(e) => handleMedicationChange(index, "instructions", e.target.value)}
-                />
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={handleAddMedication}
+              ))}
+              <button
+                type="button"
+                onClick={handleAddMedication}
+                style={{
+                  padding: "12px 24px",
+                  backgroundColor: "#27ae60",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  fontWeight: "500",
+                  marginTop: "10px",
+                  transition: "background-color 0.3s",
+                }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = "#229954"}
+                onMouseLeave={(e) => e.target.style.backgroundColor = "#27ae60"}
+              >
+                + Add Another Medication
+              </button>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Notes (optional)</label>
+              <textarea
+                placeholder="Add any additional notes or comments..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows="4"
+                style={{
+                  padding: "15px 20px",
+                  fontSize: "16px",
+                  border: "2px solid #ddd",
+                  borderRadius: "8px",
+                  backgroundColor: "#fff",
+                  color: "#333",
+                  fontFamily: "inherit",
+                  resize: "vertical",
+                  transition: "border-color 0.3s",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                onBlur={(e) => e.target.style.borderColor = "#ddd"}
+              />
+            </div>
+
+            <button 
+              type="submit"
               style={{
-                padding: "10px 20px",
-                backgroundColor: "#27ae60",
+                padding: "16px 32px",
+                backgroundColor: "#4a90e2",
                 color: "white",
                 border: "none",
-                borderRadius: "5px",
+                borderRadius: "8px",
                 cursor: "pointer",
-                marginBottom: "15px",
+                fontSize: "18px",
+                fontWeight: "600",
+                marginTop: "10px",
+                transition: "background-color 0.3s",
               }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = "#357abd"}
+              onMouseLeave={(e) => e.target.style.backgroundColor = "#4a90e2"}
             >
-              Add Another Medication
+              Create Prescription
             </button>
-
-            <textarea
-              placeholder="Notes (optional)"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows="3"
-            />
-
-            <button type="submit">Create Prescription</button>
           </form>
         </div>
       )}

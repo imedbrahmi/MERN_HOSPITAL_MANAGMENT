@@ -103,13 +103,32 @@ export const createInvoice = chatchAsyncErrors(async (req, res, next) => {
     });
 });
 
-// GET /api/v1/invoice/patient/:patientId - Factures d'un patient
+// GET /api/v1/invoice/patient/my-invoices - Mes factures (Patient)
+export const getMyInvoices = chatchAsyncErrors(async (req, res, next) => {
+    // Seul un Patient peut voir ses propres factures
+    if (req.user.role !== "Patient") {
+        return next(new ErrorHandler("Only patients can view their invoices", 403));
+    }
+
+    const invoices = await Invoice.find({ patientId: req.user._id })
+        .populate("createdBy", "firstName lastName")
+        .populate("appointmentId", "appointment_date")
+        .sort({ createdAt: -1 });
+
+    res.status(200).json({
+        success: true,
+        message: "Invoices fetched successfully",
+        invoices,
+    });
+});
+
+// GET /api/v1/invoice/patient/:patientId - Factures d'un patient (Admin/Receptionist)
 export const getPatientInvoices = chatchAsyncErrors(async (req, res, next) => {
     const { patientId } = req.params;
 
-    // Vérifier les permissions
-    if (req.user.role === "Patient" && req.user._id.toString() !== patientId) {
-        return next(new ErrorHandler("You can only view your own invoices", 403));
+    // Si c'est un Patient, utiliser getMyInvoices
+    if (req.user.role === "Patient") {
+        return getMyInvoices(req, res, next);
     }
 
     // Admin/Receptionist peut voir les factures des patients de sa clinique

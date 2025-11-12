@@ -10,19 +10,28 @@ const MyInvoices = () => {
   const [invoices, setInvoices] = useState([]);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === "Patient") {
+    console.log("MyInvoices - isAuthenticated:", isAuthenticated, "user:", user, "user.role:", user?.role);
+    if (isAuthenticated && user && user.role === "Patient") {
+      console.log("Fetching invoices for patient:", user._id);
       fetchInvoices();
+    } else {
+      console.log("Not authenticated or not a patient - isAuthenticated:", isAuthenticated, "user:", user);
     }
   }, [isAuthenticated, user]);
 
   const fetchInvoices = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/invoice/patient/${user._id}`,
+        `http://localhost:4000/api/v1/invoice/patient/my-invoices`,
         { withCredentials: true }
       );
+      console.log("Invoices data:", data);
       setInvoices(data.invoices || []);
+      if (!data.invoices || data.invoices.length === 0) {
+        console.log("No invoices found for this patient");
+      }
     } catch (error) {
+      console.error("Error fetching invoices:", error);
       toast.error(error.response?.data?.message || "Failed to fetch invoices");
       setInvoices([]);
     }
