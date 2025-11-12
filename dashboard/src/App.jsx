@@ -7,7 +7,14 @@ import Dashboard from './components/Dashboard'
 import AddNewDoctor from './components/AddNewDoctor'
 import AddNewAdmin from './components/AddNewAdmin'
 import Doctors from './components/Doctors'
+import Patients from './components/Patients'
 import Messages from './components/Messages'
+import Schedule from './components/Schedule'
+import MedicalRecords from './components/MedicalRecords'
+import Prescriptions from './components/Prescriptions'
+import RegisterPatient from './components/RegisterPatient'
+import Invoices from './components/Invoices'
+import AddNewReceptionist from './components/AddNewReceptionist'
 import SideBar from './components/SideBar'
 import Login from './components/Login'
 import Clinics from './components/Clinics'
@@ -63,13 +70,23 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
             <AddNewAdmin />
           </RouteGuard>
         } />
-        <Route path='/doctors' element={
+        <Route path='/receptionist/addnew' element={
           <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin']}>
+            <AddNewReceptionist />
+          </RouteGuard>
+        } />
+        <Route path='/doctors' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist']}>
             <Doctors />
           </RouteGuard>
         } />
+        <Route path='/patients' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist']}>
+            <Patients />
+          </RouteGuard>
+        } />
         <Route path='/messages' element={
-          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin']}>
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin', 'Receptionist']}>
             <Messages />
           </RouteGuard>
         } />
@@ -86,6 +103,33 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
         <Route path='/clinics/onboard' element={
           <RouteGuard requireAuth={true} allowedRoles={['SuperAdmin']}>
             <Onboarding />
+          </RouteGuard>
+        } />
+        {/* Doctor Routes */}
+        <Route path='/schedule' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Doctor']}>
+            <Schedule />
+          </RouteGuard>
+        } />
+        <Route path='/medical-records' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Doctor']}>
+            <MedicalRecords />
+          </RouteGuard>
+        } />
+        <Route path='/prescriptions' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Doctor']}>
+            <Prescriptions />
+          </RouteGuard>
+        } />
+        {/* Receptionist Routes */}
+        <Route path='/patients/register' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Receptionist', 'Admin']}>
+            <RegisterPatient />
+          </RouteGuard>
+        } />
+        <Route path='/invoices' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Receptionist', 'Admin']}>
+            <Invoices />
           </RouteGuard>
         } />
       </Routes>

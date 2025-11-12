@@ -1,11 +1,15 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { Context } from '../main';
 
 
 
 const AppointmentForm = () => {
+    const { isAuthenticated } = useContext(Context);
+    const navigate = useNavigate();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
     const [phone, setPhone] = useState('');
@@ -77,6 +81,14 @@ const AppointmentForm = () => {
 
     const handleAppointment = async (e) => {
         e.preventDefault();
+        
+        // Vérifier l'authentification
+        if (!isAuthenticated) {
+            toast.error('Please login first to book an appointment');
+            navigate('/login');
+            return;
+        }
+        
         try {
             const hasVisitedBool = Boolean(hasVisited);
             const {data} = await axios.post('http://localhost:4000/api/v1/appointment/post',
@@ -114,8 +126,16 @@ const AppointmentForm = () => {
             setAddress('');
             setClinicName('');
         } catch (error) {
-            toast.error(error.response?.data?.message || 'Failed to book appointment');
-
+            const errorMessage = error.response?.data?.message || 'Failed to book appointment';
+            toast.error(errorMessage);
+            
+            // Si l'erreur est 401 ou 403, rediriger vers la page de login
+            if (error.response?.status === 401 || error.response?.status === 403) {
+                toast.info('Please login to continue');
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
+            }
         }
     }
     return (

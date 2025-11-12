@@ -31,6 +31,12 @@ const Dashboard = () => {
     };
 
     const fetchDoctors = async () => {
+      // Seulement pour Admin, Receptionist et SuperAdmin (pas pour Doctor)
+      if (user?.role === "Doctor") {
+        setTotalDoctors(0);
+        return;
+      }
+      
       try {
         const { data } = await axios.get(
           "http://localhost:4000/api/v1/user/doctors",
@@ -44,7 +50,7 @@ const Dashboard = () => {
 
     fetchAppointments();
     fetchDoctors();
-  }, []);
+  }, [user?.role]);
 
   const handleUpdateStatus = async (appointmentId, status) => {
     try {
@@ -95,10 +101,12 @@ const Dashboard = () => {
             <p>Total Appointments</p>
             <h3>{totalAppointments}</h3>
           </div>
-          <div className="thirdBox">
-            <p>Registered Doctors</p>
-            <h3>{totalDoctors}</h3>
-          </div>
+          {user?.role !== "Doctor" && user?.role !== "Receptionist" && (
+            <div className="thirdBox">
+              <p>Registered Doctors</p>
+              <h3>{totalDoctors}</h3>
+            </div>
+          )}
         </div>
         <div className="banner">
           <h5>Appointments</h5>

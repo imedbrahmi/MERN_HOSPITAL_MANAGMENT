@@ -87,12 +87,13 @@ userSchema.pre("save", async function(next){
     next();
 });
 
-// Validation conditionnelle : clinicId requis pour tous sauf SuperAdmin et Admin
+// Validation conditionnelle : clinicId requis pour Doctor et Receptionist, optionnel pour SuperAdmin, Admin et Patient
 // Les Admins peuvent être créés sans clinicId et assignés plus tard via onboarding
+// Les Patients n'ont pas besoin de clinicId car ils peuvent prendre rendez-vous dans différentes cliniques
 userSchema.pre("validate", async function(next) {
-    // Si le rôle n'est pas SuperAdmin ni Admin et que clinicId n'est pas fourni (seulement à la création)
-    if (this.isNew && this.role !== "SuperAdmin" && this.role !== "Admin" && !this.clinicId) {
-        return next(new Error("clinicId is required for non-SuperAdmin users"));
+    // Si le rôle est Doctor ou Receptionist et que clinicId n'est pas fourni (seulement à la création)
+    if (this.isNew && (this.role === "Doctor" || this.role === "Receptionist") && !this.clinicId) {
+        return next(new Error("clinicId is required for Doctor and Receptionist roles"));
     }
     next();
 });

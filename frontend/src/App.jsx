@@ -6,6 +6,9 @@ import Appointment from './pages/Appointment';
 import AboutUs from './pages/AboutUs';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import MyAppointments from './pages/MyAppointments';
+import MyInvoices from './pages/MyInvoices';
+import MyPrescriptions from './pages/MyPrescriptions';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import NavBar from './components/NavBar';
@@ -46,6 +49,9 @@ const App = () => {
           <Route path="/about" element={<AboutUs />} />
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/my-appointments" element={<MyAppointments />} />
+          <Route path="/my-invoices" element={<MyInvoices />} />
+          <Route path="/my-prescriptions" element={<MyPrescriptions />} />
         </Routes>
         <Footer />
       </Router>

@@ -3,6 +3,7 @@ import { chatchAsyncErrors } from "../middelwares/catchAsyncErrors.js";
 import ErrorHandler from "../middelwares/errorMidelware.js";
 import { User } from "../models/userSchema.js";
 import { Clinic } from "../models/clinicSchema.js";
+import { Appointment } from "../models/appointmentSchema.js";
 import { generateToken } from "../utils/jwtToken.js";
 import cloudinary from "cloudinary";
 
@@ -31,8 +32,7 @@ export const pacientRegister = chatchAsyncErrors(async (req, res, next) => {
     }
     user = await User.create({ firstName, lastName, phone, CIN, email, dob, gender, password, role });
     generateToken(user, "user registered successfully", 200, res);
-
-    });
+});
 
 
 export const login = chatchAsyncErrors(async (req, res, next) => {
@@ -52,11 +52,11 @@ export const login = chatchAsyncErrors(async (req, res, next) => {
     if(!isPasswordMatched){
         return next(new ErrorHandler("invalid email or password", 404));}
 
-    // Pour le dashboard, accepter "Admin" si l'utilisateur est Admin ou SuperAdmin
+    // Pour le dashboard, accepter "Admin" si l'utilisateur est Admin, SuperAdmin, Doctor ou Receptionist
     // Pour le frontend patient, accepter seulement "Patient"
     if(role === "Admin"){
-        // Si le frontend envoie "Admin", accepter Admin ou SuperAdmin
-        if(user.role !== "Admin" && user.role !== "SuperAdmin"){
+        // Si le frontend envoie "Admin", accepter Admin, SuperAdmin, Doctor ou Receptionist (tous utilisent le dashboard)
+        if(user.role !== "Admin" && user.role !== "SuperAdmin" && user.role !== "Doctor" && user.role !== "Receptionist"){
             return next(new ErrorHandler("You are not authorized to access this resource", 403));
         }
     } else {
@@ -111,14 +111,72 @@ return res.status(200).json({
         clinicId: admin.clinicId,
     }
 });
+});
 
+// POST /api/v1/user/receptionist/addnew - Créer un nouveau Receptionist (Admin/SuperAdmin seulement)
+export const addNewReceptionist = chatchAsyncErrors(async (req, res, next) => {
+    // Seul Admin et SuperAdmin peuvent créer des Receptionists
+    if(req.user.role !== "Admin" && req.user.role !== "SuperAdmin") {
+        return next(new ErrorHandler("Only Admin and SuperAdmin can create Receptionists", 403));
+    }
+
+    const { firstName, lastName, phone, CIN, email, dob, gender, password, clinicId} = req.body;
+
+    if(!firstName || !lastName || !phone || !CIN || !email || !dob || !gender || !password) {
+        return next(new ErrorHandler("Please fill all fields", 400));
+    }
+
+    const isRegistered = await User.findOne({ email });
+    if(isRegistered){
+        return next(new ErrorHandler(`${isRegistered.role} already exist with this email`, 400));
+    }
+
+    // Déterminer le clinicId à assigner
+    let clinicIdToAssign = null;
+    
+    if (req.user.role === "Admin") {
+        // Admin : assigner automatiquement sa clinique
+        if (!req.user.clinicId) {
+            return next(new ErrorHandler("You are not assigned to any clinic. Please contact SuperAdmin.", 400));
+        }
+        clinicIdToAssign = req.user.clinicId;
+    } else if (req.user.role === "SuperAdmin") {
+        // SuperAdmin : peut spécifier un clinicId ou laisser null
+        clinicIdToAssign = clinicId || null;
+    }
+
+    const receptionist = await User.create({ 
+        firstName, 
+        lastName, 
+        phone, 
+        CIN, 
+        email, 
+        dob, 
+        gender, 
+        password, 
+        role: 'Receptionist',
+        clinicId: clinicIdToAssign
+    });
+
+    return res.status(200).json({
+        success: true,
+        message: "Receptionist created successfully",
+        receptionist: {
+            _id: receptionist._id,
+            firstName: receptionist.firstName,
+            lastName: receptionist.lastName,
+            email: receptionist.email,
+            clinicId: receptionist.clinicId,
+        }
+    });
 })
+
 export const getAllDoctors = chatchAsyncErrors(async (req, res, next) => {
-    // Isolation multi-tenant : SuperAdmin voit tous les docteurs, Admin voit seulement ceux de sa clinique
+    // Isolation multi-tenant : SuperAdmin voit tous les docteurs, Admin/Receptionist voit seulement ceux de sa clinique
     const query = { role: "Doctor" };
     
-    if (req.user.role === "Admin" && req.user.clinicId) {
-        // Admin : filtrer par sa clinique
+    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        // Admin et Receptionist : filtrer par sa clinique
         query.clinicId = req.user.clinicId;
     }
     // SuperAdmin : pas de filtre, voit tous les docteurs
@@ -159,6 +217,37 @@ export const getDoctorsByClinic = chatchAsyncErrors(async (req, res, next) => {
         success: true,
         message: "Doctors fetched successfully",
         doctors,
+    });
+})
+
+// GET /api/v1/user/patients - Récupère les patients (avec isolation multi-tenant)
+export const getAllPatients = chatchAsyncErrors(async (req, res, next) => {
+    // Isolation multi-tenant : SuperAdmin voit tous les patients, Admin/Receptionist voit seulement ceux qui ont des rendez-vous dans sa clinique
+    let patients = [];
+    
+    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        // Admin et Receptionist : récupérer les patients qui ont des rendez-vous dans sa clinique
+        const appointments = await Appointment.find({ 
+            clinicId: req.user.clinicId 
+        }).select("patientId").distinct("patientId");
+        
+        // Récupérer les patients uniques
+        if (appointments.length > 0) {
+            patients = await User.find({ 
+                _id: { $in: appointments },
+                role: "Patient"
+            }).select("firstName lastName email phone CIN dob gender");
+        }
+    } else if (req.user.role === "SuperAdmin") {
+        // SuperAdmin : voir tous les patients
+        patients = await User.find({ role: "Patient" })
+            .select("firstName lastName email phone CIN dob gender");
+    }
+    
+    res.status(200).json({
+        success: true,
+        message: "Patients fetched successfully",
+        patients,
     });
 })
 

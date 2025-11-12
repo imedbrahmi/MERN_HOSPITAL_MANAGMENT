@@ -30,11 +30,11 @@ export const sendMessage = chatchAsyncErrors(async (req, res, next) => {
 })
 
 export const getAllMessages = chatchAsyncErrors(async (req, res, next) => {
-    // Isolation multi-tenant : SuperAdmin voit tous les messages, Admin voit seulement ceux de sa clinique
+    // Isolation multi-tenant : SuperAdmin voit tous les messages, Admin/Receptionist voit seulement ceux de sa clinique
     const query = {};
     
-    if (req.user.role === "Admin" && req.user.clinicId) {
-        // Admin : filtrer par sa clinique
+    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        // Admin et Receptionist : filtrer par sa clinique
         query.clinicId = req.user.clinicId;
     }
     // SuperAdmin : pas de filtre, voit tous les messages

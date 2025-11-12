@@ -83,8 +83,8 @@ export const isAdminAuthenticated = chatchAsyncErrors(async (req, res, next) => 
     }
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = await User.findById(decoded.id);
-    // Autoriser SuperAdmin et Admin
-    if(req.user.role !== "Admin" && req.user.role !== "SuperAdmin"){
+    // Autoriser SuperAdmin, Admin, Doctor et Receptionist (tous utilisent le dashboard)
+    if(req.user.role !== "Admin" && req.user.role !== "SuperAdmin" && req.user.role !== "Doctor" && req.user.role !== "Receptionist"){
         return next(new ErrorHandler("You are not authorized to access this resource", 403));
     }
     next();
@@ -98,6 +98,20 @@ export const isPatientAuthenticated = chatchAsyncErrors(async (req, res, next) =
     const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
     req.user = await User.findById(decoded.id);
     if(req.user.role !== "Patient"){
+        return next(new ErrorHandler("You are not authorized to access this resource", 403));
+    }
+    next();
+});
+
+// Middleware pour authentifier les docteurs (utilise adminToken car les docteurs se connectent via le dashboard)
+export const isDoctorAuthenticated = chatchAsyncErrors(async (req, res, next) => {
+    const token = req.cookies.adminToken;
+    if(!token){
+        return next(new ErrorHandler("Doctor is not authenticated", 401));
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+    req.user = await User.findById(decoded.id);
+    if(req.user.role !== "Doctor"){
         return next(new ErrorHandler("You are not authorized to access this resource", 403));
     }
     next();

@@ -11,14 +11,25 @@ const NavBar = () => {
     const navigateTo = useNavigate();
      const handelLogout = async() => {
         try {
-            const res = await axios.get("http://localhost:4000/api/v1/user/patient/logout", {
-                withCredentials: true,
-            });
-            toast.success(res.data.message);
+            // Essayer de se déconnecter via l'API (si authentifié)
+            try {
+                const res = await axios.get("http://localhost:4000/api/v1/user/patient/logout", {
+                    withCredentials: true,
+                });
+                toast.success(res.data.message);
+            } catch (apiErr) {
+                // Si l'API échoue (utilisateur non authentifié), on continue quand même
+                // On supprime juste l'état local
+                console.log("Logout API failed, clearing local state:", apiErr.response?.data?.message);
+            }
+            // Toujours mettre à jour l'état local et rediriger
             setIsAuthenticated(false);
             navigateTo('/');
         } catch (err) {
-            toast.error(err.response?.data?.message || 'Failed to logout');
+            // En cas d'erreur inattendue, on nettoie quand même l'état local
+            console.error("Logout error:", err);
+            setIsAuthenticated(false);
+            navigateTo('/');
         }
      }
      const gotoLogin = () => {
@@ -34,6 +45,13 @@ const NavBar = () => {
             <div className='links'>
                 <Link to="/">HOME</Link>
                 <Link to="/appointment">APPOINTMENT</Link>
+                {isAuthenticated && (
+                  <>
+                    <Link to="/my-appointments">MY APPOINTMENTS</Link>
+                    <Link to="/my-invoices">MY INVOICES</Link>
+                    <Link to="/my-prescriptions">MY PRESCRIPTIONS</Link>
+                  </>
+                )}
                 <Link to="/about">ABOUT US</Link>
                
             </div>

@@ -9,6 +9,10 @@ import { errorMidelware } from "./middelwares/errorMidelware.js";
 import userRouter from "./router/userRouter.js";
 import appointmentRouter from "./router/appointmentRouter.js";
 import clinicRouter from "./router/clinicRouter.js";
+import scheduleRouter from "./router/scheduleRouter.js";
+import medicalRecordRouter from "./router/medicalRecordRouter.js";
+import prescriptionRouter from "./router/prescriptionRouter.js";
+import invoiceRouter from "./router/invoiceRouter.js";
 
 
 
@@ -37,6 +41,10 @@ app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/appointment", appointmentRouter);
 app.use("/api/v1/clinics", clinicRouter);
+app.use("/api/v1/schedule", scheduleRouter);
+app.use("/api/v1/medical-record", medicalRecordRouter);
+app.use("/api/v1/prescription", prescriptionRouter);
+app.use("/api/v1/invoice", invoiceRouter);
 
 connectDB();
 

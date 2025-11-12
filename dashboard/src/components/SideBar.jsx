@@ -9,6 +9,12 @@ import{IoPersonAddSharp} from 'react-icons/io5'
 import{MdAddModerator} from 'react-icons/md'
 import { FaUserDoctor } from 'react-icons/fa6'
 import { FaHospital } from 'react-icons/fa'
+import { FaUsers } from 'react-icons/fa'
+import { MdSchedule } from 'react-icons/md'
+import { FaFileMedical } from 'react-icons/fa'
+import { FaPrescription } from 'react-icons/fa'
+import { FaFileInvoiceDollar } from 'react-icons/fa'
+import { MdPersonAdd } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -50,6 +56,41 @@ const SideBar = () => {
       setShow(!show);
     }
 
+    const gotoPatientsPage = () => {
+      navigateTo('/patients');
+      setShow(!show);
+    }
+
+    const gotoSchedulePage = () => {
+      navigateTo('/schedule');
+      setShow(!show);
+    }
+
+    const gotoMedicalRecordsPage = () => {
+      navigateTo('/medical-records');
+      setShow(!show);
+    }
+
+    const gotoPrescriptionsPage = () => {
+      navigateTo('/prescriptions');
+      setShow(!show);
+    }
+
+    const gotoRegisterPatientPage = () => {
+      navigateTo('/patients/register');
+      setShow(!show);
+    }
+
+    const gotoInvoicesPage = () => {
+      navigateTo('/invoices');
+      setShow(!show);
+    }
+
+    const gotoAddNewReceptionist = () => {
+      navigateTo('/receptionist/addnew');
+      setShow(!show);
+    }
+
     const handelLogout = async() => {
       try {
           const res = await axios.get("http://localhost:4000/api/v1/user/admin/logout", {
@@ -78,8 +119,38 @@ const SideBar = () => {
              <MdAddModerator onClick={gottoAddNewAdmin} title="Add New Admin"/>
            </>
          )}
-         <FaUserDoctor onClick={gotoDoctorsPage}/>
-         <IoPersonAddSharp onClick={gottoAddNewDoctor}/>
+         {/* Icônes pour Doctor */}
+         {user && user.role === 'Doctor' && (
+           <>
+             <MdSchedule onClick={gotoSchedulePage} title="My Schedule"/>
+             <FaFileMedical onClick={gotoMedicalRecordsPage} title="Medical Records"/>
+             <FaPrescription onClick={gotoPrescriptionsPage} title="Prescriptions"/>
+           </>
+         )}
+         {/* Icônes visibles pour Admin, Receptionist et SuperAdmin (pas pour Doctor) */}
+         {user && user.role !== 'Doctor' && (
+           <>
+             <FaUserDoctor onClick={gotoDoctorsPage}/>
+             {user.role !== 'Receptionist' && (
+               <IoPersonAddSharp onClick={gottoAddNewDoctor}/>
+             )}
+             <FaUsers onClick={gotoPatientsPage} title="Patients"/>
+             {/* Icônes pour Receptionist */}
+             {user.role === 'Receptionist' && (
+               <>
+                 <IoPersonAddSharp onClick={gotoRegisterPatientPage} title="Register Patient"/>
+                 <FaFileInvoiceDollar onClick={gotoInvoicesPage} title="Invoices"/>
+               </>
+             )}
+             {/* Icônes pour Admin */}
+             {user.role === 'Admin' && (
+               <>
+                 <MdPersonAdd onClick={gotoAddNewReceptionist} title="Add Receptionist"/>
+                 <FaFileInvoiceDollar onClick={gotoInvoicesPage} title="Invoices"/>
+               </>
+             )}
+           </>
+         )}
          <AiFillMessage onClick={gotoMessagesPage}/>
          <RiLogoutBoxLine onClick={handelLogout}/>
         </div>
