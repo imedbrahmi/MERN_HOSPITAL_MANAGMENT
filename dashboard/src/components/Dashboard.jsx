@@ -12,6 +12,8 @@ const Dashboard = () => {
   const {isAuthenticated, user} = useContext(Context);
   
   const [appointments, setAppointments] = useState([]);
+  const [totalAppointments, setTotalAppointments] = useState(0);
+  const [totalDoctors, setTotalDoctors] = useState(0);
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -20,12 +22,28 @@ const Dashboard = () => {
           "http://localhost:4000/api/v1/appointment/getAll",
           { withCredentials: true }
         );
-        setAppointments(data.appointments);
+        setAppointments(data.appointments || []);
+        setTotalAppointments(data.appointments?.length || 0);
       } catch (error) {
         setAppointments([]);
+        setTotalAppointments(0);
       }
     };
+
+    const fetchDoctors = async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:4000/api/v1/user/doctors",
+          { withCredentials: true }
+        );
+        setTotalDoctors(data.doctors?.length || 0);
+      } catch (error) {
+        setTotalDoctors(0);
+      }
+    };
+
     fetchAppointments();
+    fetchDoctors();
   }, []);
 
   const handleUpdateStatus = async (appointmentId, status) => {
@@ -35,13 +53,13 @@ const Dashboard = () => {
         { status },
         { withCredentials: true }
       );
-      setAppointments((prevAppointments) =>
-        prevAppointments.map((appointment) =>
-          appointment._id === appointmentId
-            ? { ...appointment, status }
-            : appointment
-        )
+      const updatedAppointments = appointments.map((appointment) =>
+        appointment._id === appointmentId
+          ? { ...appointment, status }
+          : appointment
       );
+      setAppointments(updatedAppointments);
+      setTotalAppointments(updatedAppointments.length);
       toast.success(data.message);
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to update appointment");
@@ -75,11 +93,11 @@ const Dashboard = () => {
           </div>
           <div className="secondBox">
             <p>Total Appointments</p>
-            <h3>1500</h3>
+            <h3>{totalAppointments}</h3>
           </div>
           <div className="thirdBox">
             <p>Registered Doctors</p>
-            <h3>10</h3>
+            <h3>{totalDoctors}</h3>
           </div>
         </div>
         <div className="banner">
@@ -96,8 +114,8 @@ const Dashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {appointments && appointments.length > 0
-                ? appointments.map((appointment) => (
+              {appointments && appointments.length > 0 ? (
+                appointments.map((appointment) => (
                     <tr key={appointment._id}>
                       <td>{`${appointment.firstName} ${appointment.lastName}`}</td>
                       <td>{appointment.appointment_date.substring(0, 16)}</td>
@@ -131,7 +149,13 @@ const Dashboard = () => {
                       <td>{appointment.hasVisited === true ? <GoCheckCircleFill className="green"/> : <AiFillCloseCircle className="red"/>}</td>
                     </tr>
                   ))
-                : "No Appointments Found!"}
+              ) : (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
+                    No Appointments Found!
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
 

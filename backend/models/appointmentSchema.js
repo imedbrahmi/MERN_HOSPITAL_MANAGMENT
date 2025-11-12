@@ -85,7 +85,12 @@ const appointmentSchema = new mongoose.Schema({
         type: String,
         enum: ["Pending", "Accepted", "Rejected"],
         default: "Pending",
-    }
+    },
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Clinic",
+        required: [true, "Clinic ID is required for appointments"],
+    },
 });
 
 export const Appointment = mongoose.model("Appointment", appointmentSchema);

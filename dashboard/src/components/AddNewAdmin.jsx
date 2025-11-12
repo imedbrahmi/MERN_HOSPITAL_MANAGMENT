@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Context } from "../main";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -16,13 +16,30 @@ const AddNewAdmin = () => {
   const [dob, setDob] = useState("");
   const [gender, setGender] = useState("");
   const [password, setPassword] = useState("");
+  const [clinicId, setClinicId] = useState("");
+  const [clinics, setClinics] = useState([]);
+
+  useEffect(() => {
+    const fetchClinics = async () => {
+      try {
+        const { data } = await axios.get(
+          "http://localhost:4000/api/v1/clinics/all",
+          { withCredentials: true }
+        );
+        setClinics(data.clinics || []);
+      } catch (error) {
+        console.error("Error fetching clinics:", error);
+      }
+    };
+    fetchClinics();
+  }, []);
 
   const handleAddNewAdmin = async (e) => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
         "http://localhost:4000/api/v1/user/admin/addnew",
-        { firstName, lastName, email, phone, CIN: cin, dob, gender, password },
+        { firstName, lastName, email, phone, CIN: cin, dob, gender, password, clinicId: clinicId || null },
         {
           withCredentials: true,
           headers: { "Content-Type": "application/json" },
@@ -37,6 +54,7 @@ const AddNewAdmin = () => {
       setDob("");
       setGender("");
       setPassword("");
+      setClinicId("");
       navigate('/');
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to add admin");
@@ -107,6 +125,20 @@ const AddNewAdmin = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+          <div>
+            <select 
+              value={clinicId} 
+              onChange={(e) => setClinicId(e.target.value)}
+              style={{ width: "100%" }}
+            >
+              <option value="">Select Clinic (Optional)</option>
+              {clinics.map((clinic) => (
+                <option value={clinic._id} key={clinic._id}>
+                  {clinic.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div style={{ justifyContent: "center", alignItems: "center" }}>
             <button type="submit">ADD NEW ADMIN</button>

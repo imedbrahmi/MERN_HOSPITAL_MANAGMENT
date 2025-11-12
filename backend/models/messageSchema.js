@@ -34,6 +34,11 @@ const messageSchema = new mongoose.Schema({
         required: true,
         validate: [validator.isEmail, "Please enter a valid email"],
     },
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Clinic",
+        required: [true, "Clinic ID is required for messages"],
+    },
 });
 
 export const Message = mongoose.model("Message", messageSchema);

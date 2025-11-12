@@ -57,8 +57,7 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         required: true,
-        enum: ["Admin", "Patient","Doctor"],
-       
+        enum: ["SuperAdmin", "Admin", "Patient", "Doctor", "Receptionist"],
     },
     doctorDepartment: {
         type: String,
@@ -70,13 +69,32 @@ const userSchema = new mongoose.Schema({
         url: String,
         //  default: "https://via.placeholder.com/150",
     },
+    clinicId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Clinic",
+        // Optionnel pour SuperAdmin, requis pour les autres rôles
+        required: false,
+    },
 });
 
+// Hook pour hasher le password avant sauvegarde
 userSchema.pre("save", async function(next){
+    // Hasher le password seulement s'il a été modifié
     if(!this.isModified("password")){
-        next();
+        return next();
     }
     this.password = await bcrypt.hash(this.password, 10);
+    next();
+});
+
+// Validation conditionnelle : clinicId requis pour tous sauf SuperAdmin et Admin
+// Les Admins peuvent être créés sans clinicId et assignés plus tard via onboarding
+userSchema.pre("validate", async function(next) {
+    // Si le rôle n'est pas SuperAdmin ni Admin et que clinicId n'est pas fourni (seulement à la création)
+    if (this.isNew && this.role !== "SuperAdmin" && this.role !== "Admin" && !this.clinicId) {
+        return next(new Error("clinicId is required for non-SuperAdmin users"));
+    }
+    next();
 });
 
 userSchema.methods.comparePassword = async function(enteredPassword){

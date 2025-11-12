@@ -8,6 +8,7 @@ import { GiHamburgerMenu} from 'react-icons/gi'
 import{IoPersonAddSharp} from 'react-icons/io5'
 import{MdAddModerator} from 'react-icons/md'
 import { FaUserDoctor } from 'react-icons/fa6'
+import { FaHospital } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -16,7 +17,7 @@ import { toast } from 'react-toastify'
 
 const SideBar = () => {
     const [show, setShow] = useState(false);
-    const {isAuthenticated, setIsAuthenticated } = useContext(Context)
+    const {isAuthenticated, setIsAuthenticated, user } = useContext(Context)
 
     const navigateTo = useNavigate()
 
@@ -44,6 +45,11 @@ const SideBar = () => {
       setShow(!show);
     }
 
+    const gotoClinicsPage = () => {
+      navigateTo('/clinics');
+      setShow(!show);
+    }
+
     const handelLogout = async() => {
       try {
           const res = await axios.get("http://localhost:4000/api/v1/user/admin/logout", {
@@ -65,8 +71,14 @@ const SideBar = () => {
       className={show ? 'show sidebar' : 'sidebar'}>
         <div className='links'>
          <TiHome onClick={gotoHome}/>
+         {/* Icônes visibles uniquement pour SuperAdmin */}
+         {user && user.role === 'SuperAdmin' && (
+           <>
+             <FaHospital onClick={gotoClinicsPage} title="Manage Clinics"/>
+             <MdAddModerator onClick={gottoAddNewAdmin} title="Add New Admin"/>
+           </>
+         )}
          <FaUserDoctor onClick={gotoDoctorsPage}/>
-         <MdAddModerator onClick={gottoAddNewAdmin}/>
          <IoPersonAddSharp onClick={gottoAddNewDoctor}/>
          <AiFillMessage onClick={gotoMessagesPage}/>
          <RiLogoutBoxLine onClick={handelLogout}/>

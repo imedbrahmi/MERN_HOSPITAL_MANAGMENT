@@ -1,5 +1,5 @@
 import React from 'react'
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
 
@@ -9,12 +9,27 @@ const MessageForm = () => {
     const [phone, setPhone] = useState('');
     const [message, setMessage] = useState('');
     const [email, setEmail] = useState('');
+    const [clinicName, setClinicName] = useState('');
+    const [clinics, setClinics] = useState([]);
+
+    // Récupérer la liste des cliniques au chargement
+    useEffect(() => {
+        const fetchClinics = async () => {
+            try {
+                const { data } = await axios.get('http://localhost:4000/api/v1/clinics');
+                setClinics(data.clinics || []);
+            } catch (error) {
+                console.error('Error fetching clinics:', error);
+            }
+        };
+        fetchClinics();
+    }, []);
     const handleMessage = async (e) => {
         e.preventDefault();
         try {
             await axios.post(
                 "http://localhost:4000/api/v1/message/send",
-                {firstName, lastName, phone, message, email},
+                {firstName, lastName, phone, message, email, clinicName},
                 {
                     withCredentials: true,
                     headers: { "Content-Type": "application/json" }
@@ -26,6 +41,7 @@ const MessageForm = () => {
                 setPhone('');
                 setMessage('');
                 setEmail('');
+                setClinicName('');
             }) 
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to send message');
@@ -43,6 +59,20 @@ const MessageForm = () => {
         <div>
         <input type='email' placeholder='Email' value={email} onChange={(e) => setEmail(e.target.value)} />
           <input type='number' placeholder='Phone' value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </div>
+        <div>
+          <select 
+            value={clinicName} 
+            onChange={(e) => setClinicName(e.target.value)}
+            required
+          >
+            <option value='' disabled>Select Clinic</option>
+            {clinics.map((clinic, index) => (
+              <option value={clinic.name} key={clinic._id || index}>
+                {clinic.name}
+              </option>
+            ))}
+          </select>
         </div>
         <textarea rows={7} placeholder='Message' value={message} onChange={(e) => setMessage(e.target.value)} />
             <div style = {{justifyContent: 'center', alignItems: 'center'}}>

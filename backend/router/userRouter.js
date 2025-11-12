@@ -1,7 +1,7 @@
 import express from "express";
-import { pacientRegister, login, addNewAdmin, getAllDoctors, getUserDetails, logoutAdmin, logoutPatient, addNewDoctor } 
+import { pacientRegister, login, addNewAdmin, getAllDoctors, getDoctorsByClinic, getUserDetails, logoutAdmin, logoutPatient, addNewDoctor, getUnassignedAdmins } 
 from "../controller/userController.js";
-import { isAdminAuthenticated, isPatientAuthenticated } from "../middelwares/auth.js";
+import { isAdminAuthenticated, isPatientAuthenticated, isAuthenticated, requireRole } from "../middelwares/auth.js";
 
 
 
@@ -9,8 +9,10 @@ const router = express.Router();
 
 router.post("/patient/register", pacientRegister);
 router.post("/login", login);
-router.post("/admin/addnew", isAdminAuthenticated, addNewAdmin);
-router.get("/doctors", getAllDoctors);
+router.post("/admin/addnew", isAuthenticated, requireRole(['SuperAdmin']), addNewAdmin);
+router.get("/admins/unassigned", isAuthenticated, requireRole(['SuperAdmin']), getUnassignedAdmins);
+router.get("/doctors", isAdminAuthenticated, getAllDoctors);
+router.get("/doctors/clinic/:clinicName", getDoctorsByClinic); // Public endpoint pour le frontend
 router.get("/admin/me", isAdminAuthenticated, getUserDetails);
 router.get("/patient/me", isPatientAuthenticated, getUserDetails);
 router.get("/admin/logout", isAdminAuthenticated, logoutAdmin);

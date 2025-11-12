@@ -10,6 +10,10 @@ import Doctors from './components/Doctors'
 import Messages from './components/Messages'
 import SideBar from './components/SideBar'
 import Login from './components/Login'
+import Clinics from './components/Clinics'
+import EditClinic from './components/EditClinic'
+import Onboarding from './components/Onboarding'
+import RouteGuard from './components/RouteGuard'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { Context } from './main'
@@ -43,12 +47,47 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
     <Router>
     <SideBar />
       <Routes>
-        <Route path='/' element={<Dashboard />} />
         <Route path='/login' element={<Login />} />
-        <Route path='/doctor/addnew' element={<AddNewDoctor />} />
-        <Route path='/admin/addnew' element={<AddNewAdmin />} />
-        <Route path='/doctors' element={<Doctors />} />
-        <Route path='/messages' element={<Messages />} />
+        <Route path='/' element={
+          <RouteGuard requireAuth={true}>
+            <Dashboard />
+          </RouteGuard>
+        } />
+        <Route path='/doctor/addnew' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin']}>
+            <AddNewDoctor />
+          </RouteGuard>
+        } />
+        <Route path='/admin/addnew' element={
+          <RouteGuard requireAuth={true} allowedRoles={['SuperAdmin']}>
+            <AddNewAdmin />
+          </RouteGuard>
+        } />
+        <Route path='/doctors' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin']}>
+            <Doctors />
+          </RouteGuard>
+        } />
+        <Route path='/messages' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Admin', 'SuperAdmin']}>
+            <Messages />
+          </RouteGuard>
+        } />
+        <Route path='/clinics' element={
+          <RouteGuard requireAuth={true} allowedRoles={['SuperAdmin']}>
+            <Clinics />
+          </RouteGuard>
+        } />
+        <Route path='/clinics/edit/:id' element={
+          <RouteGuard requireAuth={true} allowedRoles={['SuperAdmin']}>
+            <EditClinic />
+          </RouteGuard>
+        } />
+        <Route path='/clinics/onboard' element={
+          <RouteGuard requireAuth={true} allowedRoles={['SuperAdmin']}>
+            <Onboarding />
+          </RouteGuard>
+        } />
       </Routes>
       <ToastContainer position="top-center"/>
     </Router>

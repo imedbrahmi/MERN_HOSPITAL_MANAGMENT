@@ -19,22 +19,61 @@ const AppointmentForm = () => {
     const [doctorLastName, setDoctorLastName] = useState('');
     const [hasVisited, setHasVisited] = useState(false);
     const [address, setAddress] = useState('');
-
-    const departmentsArray  = ["Radiology", "Cardiology", "Dermatology",
-                                "Gastroenterology","Oncology",
-                                "Neurology", "Pediatry", 
-                                "Psychiatry", "Urology", "ENT"];
-    
+    const [clinicName, setClinicName] = useState('');
+    const [clinics, setClinics] = useState([]);
     const [doctors, setDoctors] = useState([]);
-     useEffect(() => {
-        const fetchDoctors = async () => {
-            const {data} = await axios.get('http://localhost:4000/api/v1/user/doctors',
-            {withCredentials: true}   
-        );
-        setDoctors(data.doctors);
-        }
-        fetchDoctors();
-     }, []);
+    const [availableDepartments, setAvailableDepartments] = useState([]);
+    
+    // Récupérer la liste des cliniques au chargement
+    useEffect(() => {
+        const fetchClinics = async () => {
+            try {
+                const { data } = await axios.get('http://localhost:4000/api/v1/clinics');
+                setClinics(data.clinics || []);
+            } catch (error) {
+                console.error('Error fetching clinics:', error);
+            }
+        };
+        fetchClinics();
+    }, []);
+
+    // Récupérer les docteurs et départements quand une clinique est sélectionnée
+    useEffect(() => {
+        const fetchDoctorsByClinic = async () => {
+            if (!clinicName) {
+                setDoctors([]);
+                setAvailableDepartments([]);
+                setDepartment('');
+                setDoctorFirstName('');
+                setDoctorLastName('');
+                return;
+            }
+            
+            try {
+                const { data } = await axios.get(
+                    `http://localhost:4000/api/v1/user/doctors/clinic/${encodeURIComponent(clinicName)}`
+                );
+                const clinicDoctors = data.doctors || [];
+                setDoctors(clinicDoctors);
+                
+                // Extraire les départements uniques disponibles dans cette clinique
+                const uniqueDepartments = [...new Set(clinicDoctors.map(doctor => doctor.doctorDepartment).filter(Boolean))];
+                setAvailableDepartments(uniqueDepartments);
+                
+                // Réinitialiser le département et le docteur si la clinique change
+                setDepartment('');
+                setDoctorFirstName('');
+                setDoctorLastName('');
+            } catch (error) {
+                console.error('Error fetching doctors by clinic:', error);
+                setDoctors([]);
+                setAvailableDepartments([]);
+                toast.error('Failed to fetch doctors for this clinic');
+            }
+        };
+        
+        fetchDoctorsByClinic();
+    }, [clinicName]);
 
     const handleAppointment = async (e) => {
         e.preventDefault();
@@ -53,7 +92,8 @@ const AppointmentForm = () => {
                     doctor_firstName: doctorFirstName,
                     doctor_lastName: doctorLastName,
                     hasVisited: hasVisitedBool,
-                    address },
+                    address,
+                    clinicName },
                 {withCredentials: true,
                  headers: { "Content-Type": "application/json" }
                 }
@@ -72,6 +112,7 @@ const AppointmentForm = () => {
             setDoctorLastName('');
             setHasVisited(false);
             setAddress('');
+            setClinicName('');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to book appointment');
 
@@ -154,24 +195,33 @@ const AppointmentForm = () => {
           />
         </div>
         <div>
+          <select 
+            value={clinicName} 
+            onChange={(e) => setClinicName(e.target.value)}
+            required
+          >
+            <option value='' disabled>Select Clinic</option>
+            {clinics.map((clinic, index) => (
+              <option value={clinic.name} key={clinic._id || index}>
+                {clinic.name}
+              </option>
+            ))}
+          </select>
           <select
             value={department}
             onChange={(e) => {
               const selectedDepartment = e.target.value;
               setDepartment(selectedDepartment);
-              const selectedDoctor = doctors.find(
-                (doctor) => doctor.doctorDepartment === selectedDepartment
-              );
-              if (selectedDoctor) {
-                setDoctorFirstName(selectedDoctor.firstName);
-                setDoctorLastName(selectedDoctor.lastName);
-              }
+              // Réinitialiser le docteur quand le département change
+              setDoctorFirstName('');
+              setDoctorLastName('');
             }}
+            disabled={!clinicName || availableDepartments.length === 0}
           >
             <option value='' disabled>
-              Select Department
+              {!clinicName ? 'Select Clinic First' : availableDepartments.length === 0 ? 'No Departments Available' : 'Select Department'}
             </option>
-            {departmentsArray.map((depart, index) => (
+            {availableDepartments.map((depart, index) => (
               <option value={depart} key={index}>
                 {depart}
               </option>
@@ -184,7 +234,7 @@ const AppointmentForm = () => {
               setDoctorFirstName(firstName);
               setDoctorLastName(lastName);
             }}
-            disabled={!department}
+            disabled={!department || !clinicName}
           >
             <option value=''>Select Doctor</option>
             {doctors
@@ -192,7 +242,7 @@ const AppointmentForm = () => {
               .map((doctor, index) => (
                 <option
                   value={`${doctor.firstName} ${doctor.lastName}`}
-                  key={index}
+                  key={doctor._id || index}
                 >
                   {`${doctor.firstName} ${doctor.lastName}`}
                 </option>
