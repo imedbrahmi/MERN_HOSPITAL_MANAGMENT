@@ -4,24 +4,17 @@ import jwt from "jsonwebtoken";
 import { User } from "../models/userSchema.js";
 
 // Middleware générique pour vérifier l'authentification (sans vérifier le rôle)
+// SOLUTION PERMANENTE : Vérifie les deux tokens et utilise celui qui correspond au rôle de l'utilisateur
 export const isAuthenticated = chatchAsyncErrors(async (req, res, next) => {
-    // Essayer d'abord adminToken, puis patientToken
     const adminToken = req.cookies.adminToken;
     const patientToken = req.cookies.patientToken;
     
     console.log(`[isAuthenticated] Checking authentication - adminToken: ${!!adminToken}, patientToken: ${!!patientToken}`);
-    console.log(`[isAuthenticated] All cookies:`, Object.keys(req.cookies || {}));
     
     if(!adminToken && !patientToken){
-        console.log(`[isAuthenticated] No tokens found - cookies:`, Object.keys(req.cookies || {}));
+        console.log(`[isAuthenticated] No tokens found`);
         return next(new ErrorHandler("User is not authenticated", 401));
     }
-    
-    // Vérifier les deux tokens et utiliser celui qui correspond au bon rôle
-    // Si les deux sont présents, vérifier les deux et utiliser le bon
-    let token = null;
-    let tokenType = null;
-    let userFromToken = null;
     
     // Vérifier les deux tokens et collecter les utilisateurs valides
     let adminUser = null;
@@ -55,49 +48,91 @@ export const isAuthenticated = chatchAsyncErrors(async (req, res, next) => {
         }
     }
     
-    // Si les deux tokens sont valides, prioriser adminToken pour le dashboard
-    // (car les routes du dashboard utilisent adminToken pour Admin/Doctor/Receptionist)
-    // Si seulement patientToken est valide, l'utiliser (pour le frontend patient)
-    if (adminUser) {
-        token = adminUser.token;
-        tokenType = adminUser.tokenType;
-        userFromToken = adminUser.user;
-        console.log(`[isAuthenticated] Using adminToken (priority) for ${userFromToken.role} user:`, userFromToken._id);
+    // SOLUTION PERMANENTE : Si les deux tokens sont valides, utiliser celui qui correspond au rôle de l'utilisateur
+    // Si les deux sont pour des utilisateurs différents, utiliser celui qui correspond au contexte de la route
+    // Pour déterminer le contexte, on vérifie le chemin de la requête
+    
+    let selectedUser = null;
+    let selectedTokenType = null;
+    
+    // Détecter le contexte de la requête pour choisir le bon token
+    // Routes patient : routes qui commencent par /patient/ ou contiennent /my-
+    const isPatientRoute = req.path.includes('/patient/') || req.path.includes('/my-');
+    
+    // Routes dashboard : routes pour admin/doctor/receptionist
+    const isDashboardRoute = req.path.includes('/admin/') || 
+                             req.path.includes('/doctor/') || 
+                             req.path.includes('/receptionist/') || 
+                             req.path.includes('/getAll') || 
+                             req.path.includes('/doctors') || 
+                             req.path.includes('/patients') ||
+                             req.path.includes('/clinics') ||
+                             req.path.includes('/schedule') ||
+                             req.path.includes('/medical-record') ||
+                             req.path.includes('/prescription') ||
+                             req.path.includes('/invoice');
+    
+    console.log(`[isAuthenticated] Route detection - path: ${req.path}, method: ${req.method}, isPatientRoute: ${isPatientRoute}, isDashboardRoute: ${isDashboardRoute}`);
+    
+    // Si les deux tokens sont valides, choisir selon le contexte ET le rôle de l'utilisateur
+    if (adminUser && patientUser) {
+        // Les deux tokens sont valides : utiliser celui qui correspond au contexte de la route
+        // Si c'est une route patient explicite, utiliser patientToken
+        // Si c'est une route dashboard, utiliser adminToken
+        // Sinon (route mixte comme /appointment/post), utiliser celui qui correspond au rôle de l'utilisateur
+        if (isPatientRoute) {
+            selectedUser = patientUser.user;
+            selectedTokenType = patientUser.tokenType;
+            console.log(`[isAuthenticated] Both tokens valid, using patientToken for patient route`);
+        } else if (isDashboardRoute) {
+            selectedUser = adminUser.user;
+            selectedTokenType = adminUser.tokenType;
+            console.log(`[isAuthenticated] Both tokens valid, using adminToken for dashboard route`);
+        } else {
+            // Route mixte (comme /appointment/post) : utiliser celui qui correspond au rôle de l'utilisateur
+            // Si les deux sont pour des utilisateurs différents, prioriser selon le contexte
+            // Par défaut, pour les routes POST qui peuvent être utilisées par les deux, prioriser patientToken
+            // car les patients utilisent plus souvent ces routes depuis le frontend
+            if (req.method === 'POST' && (req.path.includes('/post') || req.path.includes('/create'))) {
+                // Pour les routes POST, prioriser patientToken si disponible (patients créent depuis frontend)
+                selectedUser = patientUser.user;
+                selectedTokenType = patientUser.tokenType;
+                console.log(`[isAuthenticated] Both tokens valid for POST route, using patientToken (frontend priority)`);
+            } else {
+                // Pour les autres routes, prioriser adminToken (dashboard)
+                selectedUser = adminUser.user;
+                selectedTokenType = adminUser.tokenType;
+                console.log(`[isAuthenticated] Both tokens valid, using adminToken (dashboard priority)`);
+            }
+        }
+    } else if (isPatientRoute && patientUser) {
+        // Route patient : utiliser patientToken
+        selectedUser = patientUser.user;
+        selectedTokenType = patientUser.tokenType;
+        console.log(`[isAuthenticated] Using patientToken for patient route:`, req.path);
+    } else if (isDashboardRoute && adminUser) {
+        // Route dashboard : utiliser adminToken
+        selectedUser = adminUser.user;
+        selectedTokenType = adminUser.tokenType;
+        console.log(`[isAuthenticated] Using adminToken for dashboard route:`, req.path);
+    } else if (adminUser) {
+        selectedUser = adminUser.user;
+        selectedTokenType = adminUser.tokenType;
+        console.log(`[isAuthenticated] Using adminToken (only valid token)`);
     } else if (patientUser) {
-        token = patientUser.token;
-        tokenType = patientUser.tokenType;
-        userFromToken = patientUser.user;
-        console.log(`[isAuthenticated] Using patientToken for Patient user:`, userFromToken._id);
+        selectedUser = patientUser.user;
+        selectedTokenType = patientUser.tokenType;
+        console.log(`[isAuthenticated] Using patientToken (only valid token)`);
     }
     
-    if (!token) {
+    if (!selectedUser) {
         console.log(`[isAuthenticated] No valid token found`);
         return next(new ErrorHandler("Invalid or expired token", 401));
     }
     
-    // Utiliser l'utilisateur déjà récupéré pour éviter une double requête
-    if (userFromToken) {
-        req.user = userFromToken;
-        console.log(`[isAuthenticated] User authenticated with ${tokenType}:`, { id: req.user._id, role: req.user.role, email: req.user.email });
-        next();
-    } else {
-        // Fallback: récupérer l'utilisateur depuis le token (ne devrait pas arriver normalement)
-        try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-            req.user = await User.findById(decoded.id);
-            
-            if(!req.user){
-                console.log(`[isAuthenticated] User not found for ID:`, decoded.id);
-                return next(new ErrorHandler("User not found", 404));
-            }
-            
-            console.log(`[isAuthenticated] User authenticated with ${tokenType}:`, { id: req.user._id, role: req.user.role, email: req.user.email });
-            next();
-        } catch (error) {
-            console.log(`[isAuthenticated] Token verification failed:`, error.message);
-            return next(new ErrorHandler("Invalid or expired token", 401));
-        }
-    }
+    req.user = selectedUser;
+    console.log(`[isAuthenticated] User authenticated with ${selectedTokenType}:`, { id: req.user._id, role: req.user.role, email: req.user.email });
+    next();
 });
 
 // Middleware pour vérifier que l'utilisateur a un des rôles spécifiés
