@@ -18,10 +18,27 @@ const Dashboard = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [clinicName, setClinicName] = useState("");
 
   useEffect(() => {
     fetchAppointments();
-  }, [statusFilter, dateFilter, searchTerm]);
+    fetchClinicName();
+  }, [statusFilter, dateFilter, searchTerm, user]);
+
+  const fetchClinicName = async () => {
+    if (user?.clinicId && (user?.role === "Admin" || user?.role === "Doctor" || user?.role === "Receptionist")) {
+      try {
+        const { data } = await axios.get(
+          `http://localhost:4000/api/v1/clinics/${user.clinicId}`,
+          { withCredentials: true }
+        );
+        setClinicName(data.clinic?.name || "");
+      } catch (error) {
+        console.error("Error fetching clinic name:", error);
+        setClinicName("");
+      }
+    }
+  };
 
   const fetchAppointments = async () => {
     try {
@@ -104,8 +121,31 @@ const Dashboard = () => {
     <>
       <section className="dashboard page">
         <div className="banner">
-          <div className="firstBox">
+          <div className="firstBox" style={{ position: "relative" }}>
             <img src="/doc.png" alt="docImg" />
+            {(user?.role === "Admin" || user?.role === "Doctor" || user?.role === "Receptionist") && clinicName && (
+              <div style={{ 
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                padding: "12px 20px",
+                backgroundColor: "rgba(255, 255, 255, 0.95)",
+                borderRadius: "12px",
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
+                border: "2px solid rgba(255, 255, 255, 0.8)"
+              }}>
+                <span style={{ fontSize: "24px" }}>🏥</span>
+                <span style={{ 
+                  fontSize: "20px", 
+                  fontWeight: "700",
+                  color: "#4a5568",
+                  letterSpacing: "0.5px"
+                }}>{clinicName}</span>
+              </div>
+            )}
             <div className="content">
               <div>
                 <p>Hello ,</p>
