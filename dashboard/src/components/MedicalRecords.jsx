@@ -166,107 +166,288 @@ const MedicalRecords = () => {
           className="card"
           style={{
             backgroundColor: "#ffffff",
-            padding: "30px",
+            padding: "40px",
             borderRadius: "15px",
             boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
             marginBottom: "30px",
           }}
         >
-          <h3>{editingRecord ? "Edit Medical Record" : "Add New Medical Record"}</h3>
-          <form onSubmit={handleSubmit} className="add-admin-form">
-            <select
-              value={formData.patientId}
-              onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
-              required
+          <h3 style={{ fontSize: "28px", marginBottom: "30px", color: "#333", fontWeight: "600" }}>
+            {editingRecord ? "Edit Medical Record" : "Create New Medical Record"}
+          </h3>
+          <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "16px", fontWeight: "600", color: "#333" }}>Patient *</label>
+                <select
+                  value={formData.patientId}
+                  onChange={(e) => setFormData({ ...formData, patientId: e.target.value })}
+                  required
+                  style={{
+                    padding: "15px 20px",
+                    fontSize: "16px",
+                    border: "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    cursor: "pointer",
+                    transition: "border-color 0.3s",
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                  onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                >
+                  <option value="">Select Patient</option>
+                  {patients.map((patient) => (
+                    <option key={patient._id} value={patient._id}>
+                      {patient.firstName} {patient.lastName || ""} - {patient.email}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "16px", fontWeight: "600", color: "#333" }}>Visit Date *</label>
+                <input
+                  type="date"
+                  value={formData.visitDate}
+                  onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
+                  required
+                  style={{
+                    padding: "15px 20px",
+                    fontSize: "16px",
+                    border: "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    cursor: "pointer",
+                    transition: "border-color 0.3s",
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                  onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "20px" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Diagnosis *</label>
+                <textarea
+                  value={formData.diagnosis}
+                  onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
+                  required
+                  rows="4"
+                  placeholder="Enter diagnosis..."
+                  style={{
+                    padding: "15px 20px",
+                    fontSize: "16px",
+                    border: "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                    transition: "border-color 0.3s",
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                  onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Symptoms</label>
+                <textarea
+                  value={formData.symptoms}
+                  onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
+                  rows="4"
+                  placeholder="Enter symptoms..."
+                  style={{
+                    padding: "15px 20px",
+                    fontSize: "16px",
+                    border: "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                    transition: "border-color 0.3s",
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                  onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Examination</label>
+                <textarea
+                  value={formData.examination}
+                  onChange={(e) => setFormData({ ...formData, examination: e.target.value })}
+                  rows="4"
+                  placeholder="Enter examination details..."
+                  style={{
+                    padding: "15px 20px",
+                    fontSize: "16px",
+                    border: "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                    transition: "border-color 0.3s",
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                  onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                />
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Treatment</label>
+                <textarea
+                  value={formData.treatment}
+                  onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
+                  rows="4"
+                  placeholder="Enter treatment details..."
+                  style={{
+                    padding: "15px 20px",
+                    fontSize: "16px",
+                    border: "2px solid #ddd",
+                    borderRadius: "8px",
+                    backgroundColor: "#fff",
+                    color: "#333",
+                    fontFamily: "inherit",
+                    resize: "vertical",
+                    transition: "border-color 0.3s",
+                  }}
+                  onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                  onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginTop: "10px" }}>
+              <h4 style={{ fontSize: "20px", marginBottom: "20px", color: "#333", fontWeight: "600" }}>Vital Signs</h4>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Blood Pressure</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., 120/80"
+                    value={formData.vitalSigns.bloodPressure}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        vitalSigns: { ...formData.vitalSigns, bloodPressure: e.target.value },
+                      })
+                    }
+                    style={{
+                      padding: "15px 20px",
+                      fontSize: "16px",
+                      border: "2px solid #ddd",
+                      borderRadius: "8px",
+                      backgroundColor: "#fff",
+                      color: "#333",
+                      transition: "border-color 0.3s",
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                    onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Heart Rate (BPM)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 72"
+                    value={formData.vitalSigns.heartRate}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        vitalSigns: { ...formData.vitalSigns, heartRate: e.target.value },
+                      })
+                    }
+                    style={{
+                      padding: "15px 20px",
+                      fontSize: "16px",
+                      border: "2px solid #ddd",
+                      borderRadius: "8px",
+                      backgroundColor: "#fff",
+                      color: "#333",
+                      transition: "border-color 0.3s",
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                    onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                  />
+                </div>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                  <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Temperature (°C)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g., 36.5"
+                    value={formData.vitalSigns.temperature}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        vitalSigns: { ...formData.vitalSigns, temperature: e.target.value },
+                      })
+                    }
+                    style={{
+                      padding: "15px 20px",
+                      fontSize: "16px",
+                      border: "2px solid #ddd",
+                      borderRadius: "8px",
+                      backgroundColor: "#fff",
+                      color: "#333",
+                      transition: "border-color 0.3s",
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                    onBlur={(e) => e.target.style.borderColor = "#ddd"}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+              <label style={{ fontSize: "15px", fontWeight: "500", color: "#555" }}>Notes (optional)</label>
+              <textarea
+                placeholder="Add any additional notes or comments..."
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                rows="4"
+                style={{
+                  padding: "15px 20px",
+                  fontSize: "16px",
+                  border: "2px solid #ddd",
+                  borderRadius: "8px",
+                  backgroundColor: "#fff",
+                  color: "#333",
+                  fontFamily: "inherit",
+                  resize: "vertical",
+                  transition: "border-color 0.3s",
+                }}
+                onFocus={(e) => e.target.style.borderColor = "#4a90e2"}
+                onBlur={(e) => e.target.style.borderColor = "#ddd"}
+              />
+            </div>
+
+            <button 
+              type="submit"
+              style={{
+                padding: "16px 32px",
+                backgroundColor: "#4a90e2",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                fontSize: "18px",
+                fontWeight: "600",
+                marginTop: "10px",
+                transition: "background-color 0.3s",
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = "#357abd"}
+              onMouseLeave={(e) => e.target.style.backgroundColor = "#4a90e2"}
             >
-              <option value="">Select Patient</option>
-              {patients.map((patient) => (
-                <option key={patient._id} value={patient._id}>
-                  {patient.firstName} {patient.lastName || ""} - {patient.email}
-                </option>
-              ))}
-            </select>
-
-            <input
-              type="date"
-              value={formData.visitDate}
-              onChange={(e) => setFormData({ ...formData, visitDate: e.target.value })}
-              required
-            />
-
-            <textarea
-              placeholder="Diagnosis *"
-              value={formData.diagnosis}
-              onChange={(e) => setFormData({ ...formData, diagnosis: e.target.value })}
-              required
-              rows="3"
-            />
-
-            <textarea
-              placeholder="Symptoms"
-              value={formData.symptoms}
-              onChange={(e) => setFormData({ ...formData, symptoms: e.target.value })}
-              rows="3"
-            />
-
-            <textarea
-              placeholder="Examination"
-              value={formData.examination}
-              onChange={(e) => setFormData({ ...formData, examination: e.target.value })}
-              rows="3"
-            />
-
-            <textarea
-              placeholder="Treatment"
-              value={formData.treatment}
-              onChange={(e) => setFormData({ ...formData, treatment: e.target.value })}
-              rows="3"
-            />
-
-            <input
-              type="text"
-              placeholder="Blood Pressure (e.g., 120/80)"
-              value={formData.vitalSigns.bloodPressure}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  vitalSigns: { ...formData.vitalSigns, bloodPressure: e.target.value },
-                })
-              }
-            />
-
-            <input
-              type="number"
-              placeholder="Heart Rate (BPM)"
-              value={formData.vitalSigns.heartRate}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  vitalSigns: { ...formData.vitalSigns, heartRate: e.target.value },
-                })
-              }
-            />
-
-            <input
-              type="number"
-              placeholder="Temperature (°C)"
-              value={formData.vitalSigns.temperature}
-              onChange={(e) =>
-                setFormData({
-                  ...formData,
-                  vitalSigns: { ...formData.vitalSigns, temperature: e.target.value },
-                })
-              }
-            />
-
-            <textarea
-              placeholder="Notes"
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              rows="3"
-            />
-
-            <button type="submit">{editingRecord ? "Update" : "Create"}</button>
+              {editingRecord ? "Update Medical Record" : "Create Medical Record"}
+            </button>
           </form>
         </div>
       )}
