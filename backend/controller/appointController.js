@@ -10,6 +10,7 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
            dob, gender, appointment_date, department, 
            doctor_firstName, doctor_lastName,
            hasVisited, address, clinicName,
+           patientId: providedPatientId, // Optionnel : ID du patient si fourni par réceptionniste
          } = req.body;
 
         if(!firstName || !lastName || !phone || !CIN || !email ||
@@ -24,6 +25,13 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
     // Convertir clinicName en clinicId
     const clinicId = await getClinicIdByName(clinicName, next);
     if (!clinicId) return; // Erreur déjà gérée dans getClinicIdByName
+    
+    // Vérifier que le réceptionniste/admin ne peut créer des appointments que pour sa clinique
+    if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
+        if (req.user.clinicId.toString() !== clinicId.toString()) {
+            return next(new ErrorHandler("You can only create appointments for your own clinic", 403));
+        }
+    }
     
     // Rechercher le docteur par firstName, department et clinicId
     // Si doctor_lastName est fourni, l'utiliser pour affiner la recherche
@@ -47,7 +55,66 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
             return next(new ErrorHandler("Conflict: Multiple doctors found. Please specify doctor's last name.", 400));
         }
     const doctorId = isConfict[0]._id;
-    const patientId = req.user._id;
+    
+    // Gérer le patientId selon le rôle de l'utilisateur
+    let patientId;
+    if (req.user.role === "Patient") {
+        // Si c'est un patient, utiliser son propre ID
+        patientId = req.user._id;
+    } else if (req.user.role === "Admin" || req.user.role === "Receptionist") {
+        // Si c'est un admin/réceptionniste, trouver ou créer le patient
+        if (providedPatientId) {
+            // Vérifier que le patient existe et appartient à la clinique
+            const patient = await User.findById(providedPatientId);
+            if (!patient || patient.role !== "Patient") {
+                return next(new ErrorHandler("Patient not found", 404));
+            }
+            patientId = providedPatientId;
+        } else {
+            // Chercher le patient par CIN ou email
+            let patient = await User.findOne({
+                $or: [
+                    { CIN: CIN },
+                    { email: email }
+                ],
+                role: "Patient"
+            });
+            
+            if (!patient) {
+                // Créer un nouveau patient si il n'existe pas
+                // Générer un mot de passe temporaire (le patient devra le changer à la première connexion)
+                const tempPassword = `Temp${CIN}${Date.now()}`;
+                patient = await User.create({
+                    firstName,
+                    lastName,
+                    phone,
+                    CIN,
+                    email,
+                    dob,
+                    gender,
+                    password: tempPassword,
+                    role: "Patient",
+                    isActive: true,
+                    clinicId: clinicId // Assigner le clinicId lors de la création via appointment
+                });
+            } else {
+                // Mettre à jour les informations du patient si nécessaire
+                const updateData = {};
+                if (patient.firstName !== firstName) updateData.firstName = firstName;
+                if (patient.lastName !== lastName) updateData.lastName = lastName;
+                if (patient.phone !== phone) updateData.phone = phone;
+                if (patient.dob?.toString() !== new Date(dob).toString()) updateData.dob = dob;
+                if (patient.gender !== gender) updateData.gender = gender;
+                
+                if (Object.keys(updateData).length > 0) {
+                    await User.findByIdAndUpdate(patient._id, updateData, { new: true });
+                }
+            }
+            patientId = patient._id;
+        }
+    } else {
+        return next(new ErrorHandler("You are not authorized to create appointments", 403));
+    }
     
     // Vérifier si le docteur a déjà un appointment à cette date/heure exacte
     // (Vérification de base - la vérification de disponibilité via Schedule est optionnelle)
@@ -61,23 +128,24 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Doctor already has an appointment at this time", 400));
     }
     
-    // Vérification optionnelle de disponibilité via Schedule (seulement si un schedule existe)
-    // Cette vérification est optionnelle pour permettre la création d'appointments même sans schedule défini
+    // Vérification de disponibilité via Schedule (respecter les horaires disponibles)
+    // Cette vérification est importante pour les réceptionnistes aussi
     try {
         const { Schedule } = await import("../models/scheduleSchema.js");
         const appointmentDate = new Date(appointment_date);
         const dayOfWeek = appointmentDate.toLocaleDateString('en-US', { weekday: 'long' });
         
-        // Vérifier si le docteur a un horaire pour ce jour spécifique
-        const daySchedule = await Schedule.findOne({
+        // Récupérer TOUS les schedules pour ce jour (un docteur peut avoir plusieurs créneaux)
+        const schedules = await Schedule.find({
             doctorId: doctorId,
             dayOfWeek: dayOfWeek,
             isAvailable: true
-        });
+        }).sort({ startTime: 1 });
         
-        // Si un schedule existe pour ce jour, vérifier l'heure
-        if (daySchedule) {
-            // Extraire l'heure de l'appointment si elle est fournie
+        // Si des schedules existent pour ce jour, vérifier que l'heure est dans l'un des créneaux
+        if (schedules.length > 0) {
+            // Extraire l'heure de l'appointment
+            let appointmentTime = null;
             if (appointment_date.includes('T') || appointment_date.includes(' ')) {
                 let appointmentTimeStr = appointment_date;
                 if (appointment_date.includes('T')) {
@@ -86,12 +154,20 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
                     appointmentTimeStr = appointment_date.split(' ')[1];
                 }
                 
-                // Comparer les heures (format HH:MM) seulement si l'heure est fournie
                 if (appointmentTimeStr && appointmentTimeStr.length >= 5) {
-                    const appointmentTime = appointmentTimeStr.substring(0, 5);
-                    if (appointmentTime < daySchedule.startTime || appointmentTime > daySchedule.endTime) {
-                        return next(new ErrorHandler(`Doctor is only available between ${daySchedule.startTime} and ${daySchedule.endTime} on ${dayOfWeek}`, 400));
-                    }
+                    appointmentTime = appointmentTimeStr.substring(0, 5);
+                }
+            }
+            
+            // Vérifier que l'heure est dans l'un des créneaux disponibles
+            if (appointmentTime) {
+                const isInSchedule = schedules.some(schedule => {
+                    return appointmentTime >= schedule.startTime && appointmentTime <= schedule.endTime;
+                });
+                
+                if (!isInSchedule) {
+                    const scheduleRanges = schedules.map(s => `${s.startTime}-${s.endTime}`).join(', ');
+                    return next(new ErrorHandler(`Doctor is only available at these times on ${dayOfWeek}: ${scheduleRanges}`, 400));
                 }
             }
         }

@@ -15,6 +15,7 @@ import { FaFileMedical } from 'react-icons/fa'
 import { FaPrescription } from 'react-icons/fa'
 import { FaFileInvoiceDollar } from 'react-icons/fa'
 import { MdPersonAdd } from 'react-icons/md'
+import { FaCalendarPlus } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -91,6 +92,11 @@ const SideBar = () => {
       setShow(!show);
     }
 
+    const gotoCreateAppointment = () => {
+      navigateTo('/appointments/create');
+      setShow(!show);
+    }
+
     const handelLogout = async() => {
       try {
           const res = await axios.get("http://localhost:4000/api/v1/user/admin/logout", {
@@ -140,6 +146,7 @@ const SideBar = () => {
              {user.role === 'Receptionist' && (
                <>
                  <IoPersonAddSharp onClick={gotoRegisterPatientPage} title="Register Patient"/>
+                 <FaCalendarPlus onClick={gotoCreateAppointment} title="Create Appointment"/>
                  <FaFileInvoiceDollar onClick={gotoInvoicesPage} title="Invoices"/>
                </>
              )}
@@ -147,6 +154,7 @@ const SideBar = () => {
              {user.role === 'Admin' && (
                <>
                  <MdPersonAdd onClick={gotoAddNewReceptionist} title="Add Receptionist"/>
+                 <FaCalendarPlus onClick={gotoCreateAppointment} title="Create Appointment"/>
                  <FaFileInvoiceDollar onClick={gotoInvoicesPage} title="Invoices"/>
                </>
              )}

@@ -4,7 +4,8 @@ import { isPatientAuthenticated, isAdminAuthenticated, isDoctorAuthenticated, is
 
 const router = express.Router();
 
-router.post("/post", isPatientAuthenticated, postAppointment);
+// Permettre aux patients ET aux réceptionnistes/admins de créer des appointments
+router.post("/post", isAuthenticated, requireRole(['Patient', 'Admin', 'Receptionist']), postAppointment);
 router.get("/getAll", isAuthenticated, requireRole(['SuperAdmin', 'Admin', 'Doctor', 'Receptionist']), getAllAppointments);
 router.get("/patient/my-appointments", isPatientAuthenticated, getMyAppointments);
 router.put("/update/:id", isAuthenticated, requireRole(['SuperAdmin', 'Admin', 'Doctor', 'Receptionist', 'Patient']), updateAppointment);

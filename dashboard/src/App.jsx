@@ -23,6 +23,7 @@ import Onboarding from './components/Onboarding'
 import EditDoctor from './components/EditDoctor'
 import EditPatient from './components/EditPatient'
 import PatientDetails from './components/PatientDetails'
+import CreateAppointment from './components/CreateAppointment'
 import RouteGuard from './components/RouteGuard'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -148,6 +149,11 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
         <Route path='/invoices' element={
           <RouteGuard requireAuth={true} allowedRoles={['Receptionist', 'Admin']}>
             <Invoices />
+          </RouteGuard>
+        } />
+        <Route path='/appointments/create' element={
+          <RouteGuard requireAuth={true} allowedRoles={['Receptionist', 'Admin']}>
+            <CreateAppointment />
           </RouteGuard>
         } />
       </Routes>

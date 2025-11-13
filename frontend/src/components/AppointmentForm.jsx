@@ -261,31 +261,28 @@ const AppointmentForm = () => {
             ))}
           </select>
           <select
-            value={doctorFirstName ? `${doctorFirstName} ${doctorLastName || ''}`.trim() : ''}
+            value={selectedDoctorId || ''}
             onChange={(e) => {
-              const fullName = e.target.value.trim();
-              if (fullName) {
-                const parts = fullName.split(' ');
-                setDoctorFirstName(parts[0] || '');
-                setDoctorLastName(parts.slice(1).join(' ') || '');
-                
-                // Trouver le doctorId correspondant
+              const doctorId = e.target.value;
+              if (doctorId) {
+                // Trouver le docteur sélectionné
                 const selectedDoctor = doctors
                   .filter((doctor) => doctor.doctorDepartment === department)
-                  .find((doctor) => {
-                    const doctorFullName = `${doctor.firstName} ${doctor.lastName || ''}`.trim();
-                    return doctorFullName === fullName;
-                  });
+                  .find((doctor) => doctor._id === doctorId);
                 
                 if (selectedDoctor) {
                   setSelectedDoctorId(selectedDoctor._id);
+                  setDoctorFirstName(selectedDoctor.firstName || '');
+                  setDoctorLastName(selectedDoctor.lastName || '');
                 } else {
                   setSelectedDoctorId('');
+                  setDoctorFirstName('');
+                  setDoctorLastName('');
                 }
               } else {
+                setSelectedDoctorId('');
                 setDoctorFirstName('');
                 setDoctorLastName('');
-                setSelectedDoctorId('');
               }
               
               // Réinitialiser les créneaux et la date
@@ -303,7 +300,7 @@ const AppointmentForm = () => {
                 const doctorFullName = `${doctor.firstName} ${doctor.lastName || ''}`.trim();
                 return (
                   <option
-                    value={doctorFullName}
+                    value={doctor._id}
                     key={doctor._id || index}
                   >
                     {doctorFullName}
@@ -347,7 +344,13 @@ const AppointmentForm = () => {
                       setSelectedTimeSlot(slot.time);
                       // Mettre à jour appointmentDate avec la date + heure
                       // Format: YYYY-MM-DD HH:MM
-                      const dateOnly = appointmentDate.split('T')[0] || appointmentDate.split(' ')[0];
+                      // Extraire seulement la date (sans l'heure si elle existe déjà)
+                      let dateOnly = appointmentDate;
+                      if (appointmentDate.includes('T')) {
+                        dateOnly = appointmentDate.split('T')[0];
+                      } else if (appointmentDate.includes(' ')) {
+                        dateOnly = appointmentDate.split(' ')[0];
+                      }
                       const dateTime = `${dateOnly} ${slot.time}`;
                       setAppointmentDate(dateTime);
                     }}

@@ -7,7 +7,34 @@ import { isAdminAuthenticated, isPatientAuthenticated, isAuthenticated, requireR
 
 const router = express.Router();
 
-router.post("/patient/register", pacientRegister);
+// Route pour enregistrer un patient : accessible publiquement (pour auto-inscription) ou avec authentification (pour admin/réceptionniste)
+// L'authentification est optionnelle - vérifiée dans le contrôleur
+router.post("/patient/register", async (req, res, next) => {
+    // Essayer d'authentifier, mais ne pas échouer si non authentifié (pour auto-inscription)
+    const adminToken = req.cookies.adminToken;
+    const patientToken = req.cookies.patientToken;
+    
+    if (adminToken || patientToken) {
+        // Si un token existe, authentifier l'utilisateur
+        try {
+            const jwt = (await import("jsonwebtoken")).default;
+            const { User } = await import("../models/userSchema.js");
+            const token = adminToken || patientToken;
+            const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+            req.user = await User.findById(decoded.id);
+            if (!req.user) {
+                req.user = null;
+            }
+        } catch (error) {
+            // Si l'authentification échoue, continuer sans utilisateur (auto-inscription)
+            req.user = null;
+        }
+    } else {
+        // Si pas de token, continuer sans authentification (auto-inscription)
+        req.user = null;
+    }
+    next();
+}, pacientRegister);
 router.post("/login", login);
 router.post("/admin/addnew", isAuthenticated, requireRole(['SuperAdmin']), addNewAdmin);
 router.post("/receptionist/addnew", isAuthenticated, requireRole(['Admin', 'SuperAdmin']), addNewReceptionist);
