@@ -226,48 +226,6 @@ const AppointmentForm = () => {
             <option value='Male'>Male</option>
             <option value='Female'>Female</option>
           </select>
-          <input
-            type={appointmentDate ? 'date' : 'text'}
-            placeholder='Appointment Date'
-            value={appointmentDate.split(' ')[0] || appointmentDate}
-            onFocus={(e) => (e.target.type = 'date')}
-            onBlur={(e) => {
-              if (!e.target.value) {
-                e.target.type = 'text';
-              }
-            }}
-            onChange={async (e) => {
-              const selectedDate = e.target.value;
-              setAppointmentDate(selectedDate);
-              setSelectedTimeSlot('');
-              
-              // Si un docteur est sélectionné et une date est choisie, récupérer les créneaux disponibles
-              if (selectedDoctorId && selectedDate) {
-                setLoadingSlots(true);
-                try {
-                  const { data } = await axios.get(
-                    `http://localhost:4000/api/v1/schedule/available/${selectedDoctorId}?date=${selectedDate}`
-                  );
-                  setAvailableSlots(data.availableSlots || []);
-                  if (data.availableSlots && data.availableSlots.length === 0) {
-                    toast.info('No available time slots for this date');
-                  }
-                } catch (error) {
-                  console.error('Error fetching available slots:', error);
-                  setAvailableSlots([]);
-                  if (error.response?.status !== 200) {
-                    toast.error('Failed to fetch available time slots');
-                  }
-                } finally {
-                  setLoadingSlots(false);
-                }
-              } else {
-                setAvailableSlots([]);
-              }
-            }}
-            disabled={!selectedDoctorId}
-            min={new Date().toISOString().split('T')[0]}
-          />
         </div>
         <div>
           <select 
@@ -433,8 +391,55 @@ const AppointmentForm = () => {
             )}
           </div>
         )}
+        
+        {/* Appointment Date - Juste avant Address */}
+        <div>
+          <input
+            type={appointmentDate ? 'date' : 'text'}
+            placeholder='Appointment Date'
+            value={appointmentDate.split(' ')[0] || appointmentDate}
+            onFocus={(e) => (e.target.type = 'date')}
+            onBlur={(e) => {
+              if (!e.target.value) {
+                e.target.type = 'text';
+              }
+            }}
+            onChange={async (e) => {
+              const selectedDate = e.target.value;
+              setAppointmentDate(selectedDate);
+              setSelectedTimeSlot('');
+              
+              // Si un docteur est sélectionné et une date est choisie, récupérer les créneaux disponibles
+              if (selectedDoctorId && selectedDate) {
+                setLoadingSlots(true);
+                try {
+                  const { data } = await axios.get(
+                    `http://localhost:4000/api/v1/schedule/available/${selectedDoctorId}?date=${selectedDate}`
+                  );
+                  setAvailableSlots(data.availableSlots || []);
+                  if (data.availableSlots && data.availableSlots.length === 0) {
+                    toast.info('No available time slots for this date');
+                  }
+                } catch (error) {
+                  console.error('Error fetching available slots:', error);
+                  setAvailableSlots([]);
+                  if (error.response?.status !== 200) {
+                    toast.error('Failed to fetch available time slots');
+                  }
+                } finally {
+                  setLoadingSlots(false);
+                }
+              } else {
+                setAvailableSlots([]);
+              }
+            }}
+            disabled={!selectedDoctorId}
+            min={new Date().toISOString().split('T')[0]}
+            style={{ width: '100%' }}
+          />
+        </div>
           
-           <textarea rows='4' value={address} onChange={(e) => setAddress(e.target.value)} placeholder='Address' />
+        <textarea rows='4' value={address} onChange={(e) => setAddress(e.target.value)} placeholder='Address' />
         <div
           style={{
             gap: '10px',
