@@ -83,6 +83,11 @@ const MyAppointments = () => {
                     <p style={{ margin: "5px 0" }}>
                       <strong>Department:</strong> {appointment.department}
                     </p>
+                    {appointment.clinicId && (
+                      <p style={{ margin: "5px 0" }}>
+                        <strong>Clinic:</strong> {appointment.clinicId.name || appointment.clinicId}
+                      </p>
+                    )}
                     <p style={{ margin: "5px 0" }}>
                       <strong>Status:</strong>{" "}
                       <span

@@ -307,15 +307,21 @@ export const getClinicIdByName = async (clinicName, next) => {
         return next(new ErrorHandler("Clinic name is required", 400));
     }
     
+    // Recherche insensible à la casse et aux espaces
     const clinic = await Clinic.findOne({ 
-        name: clinicName,
+        name: { $regex: new RegExp(`^${clinicName.trim()}$`, 'i') },
         isActive: true 
     });
     
     if (!clinic) {
+        console.log(`[getClinicIdByName] Clinic not found: "${clinicName}"`);
+        // Essayer de trouver toutes les cliniques actives pour debug
+        const allClinics = await Clinic.find({ isActive: true }).select('name');
+        console.log(`[getClinicIdByName] Available clinics:`, allClinics.map(c => c.name));
         return next(new ErrorHandler(`Clinic "${clinicName}" not found or inactive`, 404));
     }
     
+    console.log(`[getClinicIdByName] Found clinic: "${clinic.name}" with ID:`, clinic._id);
     return clinic._id;
 };
 

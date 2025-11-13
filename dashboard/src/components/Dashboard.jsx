@@ -30,14 +30,23 @@ const Dashboard = () => {
       if (dateFilter) params.append("date", dateFilter);
       if (searchTerm) params.append("search", searchTerm);
       
+      console.log(`[Dashboard] Fetching appointments for user:`, user?.role, user?._id);
+      
       const { data } = await axios.get(
         `http://localhost:4000/api/v1/appointment/getAll?${params.toString()}`,
         { withCredentials: true }
       );
+      console.log(`[Dashboard] Appointments fetched:`, data.appointments?.length || 0);
       setAppointments(data.appointments || []);
       setFilteredAppointments(data.appointments || []);
       setTotalAppointments(data.appointments?.length || 0);
     } catch (error) {
+      console.error(`[Dashboard] Error fetching appointments:`, {
+        status: error.response?.status,
+        message: error.response?.data?.message || error.message,
+        data: error.response?.data
+      });
+      toast.error(error.response?.data?.message || "Failed to fetch appointments");
       setAppointments([]);
       setFilteredAppointments([]);
       setTotalAppointments(0);

@@ -41,8 +41,9 @@ const App = () => {
         // Si l'erreur est 401 ou 400, l'utilisateur n'est pas authentifié (normal)
         // On ne fait rien, juste on s'assure que l'état est correct
         const status = err.response?.status;
+        const errorMessage = err.response?.data?.message || err.message;
         if (status === 401 || status === 400) {
-          console.log("User not authenticated (status:", status, ")");
+          console.log("User not authenticated (status:", status, "message:", errorMessage, ")");
           setIsAuthenticated(false);
           setUser({});
         } else {
@@ -72,7 +73,18 @@ const App = () => {
         </Routes>
         <Footer />
       </Router>
-      <ToastContainer position="top-center" autoClose={3000} hideProgressBar={false} newestOnTop />
+      <ToastContainer 
+        position="top-center" 
+        autoClose={5000} 
+        hideProgressBar={false} 
+        newestOnTop={true}
+        closeOnClick={true}
+        rtl={false}
+        pauseOnFocusLoss={true}
+        draggable={true}
+        pauseOnHover={true}
+        theme="light"
+      />
     </>
   );
 };

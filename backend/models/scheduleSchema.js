@@ -8,8 +8,13 @@ const scheduleSchema = new mongoose.Schema({
     },
     dayOfWeek: {
         type: String,
-        required: true,
+        required: false, // Optionnel si date est fourni
         enum: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    },
+    date: {
+        type: Date,
+        required: false, // Optionnel si dayOfWeek est fourni (pour rétrocompatibilité)
+        // Format: YYYY-MM-DD (date spécifique)
     },
     startTime: {
         type: String,
@@ -53,8 +58,17 @@ const scheduleSchema = new mongoose.Schema({
     timestamps: true,
 });
 
+// Validation : au moins dayOfWeek ou date doit être fourni
+scheduleSchema.pre('validate', function(next) {
+    if (!this.dayOfWeek && !this.date) {
+        return next(new Error('Either dayOfWeek or date must be provided'));
+    }
+    next();
+});
+
 // Index pour améliorer les performances
 scheduleSchema.index({ doctorId: 1, dayOfWeek: 1 });
+scheduleSchema.index({ doctorId: 1, date: 1 });
 scheduleSchema.index({ clinicId: 1 });
 
 export const Schedule = mongoose.model("Schedule", scheduleSchema);

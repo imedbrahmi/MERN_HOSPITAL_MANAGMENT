@@ -34,35 +34,18 @@ export const pacientRegister = chatchAsyncErrors(async (req, res, next) => {
     }
     
     // Déterminer le clinicId à assigner
+    // IMPORTANT: Les patients n'ont plus de clinicId fixe
+    // Ils sont liés aux cliniques via leurs appointments
+    // Seuls les réceptionnistes/admins assignent un clinicId lors de la création manuelle
     let clinicIdToAssign = null;
     
-    // 1. Si c'est un Admin ou Receptionist qui crée le patient, utiliser son clinicId
+    // Seulement si c'est un Admin ou Receptionist qui crée le patient manuellement
     if (req.user && (req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
         clinicIdToAssign = req.user.clinicId;
         console.log(`Assigning clinicId ${clinicIdToAssign} to patient created by ${req.user.role} ${req.user.firstName}`);
-    } 
-    // 2. Si c'est un patient qui s'inscrit et qu'il a fourni un clinicName, convertir en clinicId
-    else if (clinicName && (!req.user || req.user.role === "Patient")) {
-        try {
-            const { Clinic } = await import("../models/clinicSchema.js");
-            const clinic = await Clinic.findOne({ 
-                name: clinicName,
-                isActive: true 
-            });
-            
-            if (!clinic) {
-                return next(new ErrorHandler(`Clinic "${clinicName}" not found or inactive`, 404));
-            }
-            
-            clinicIdToAssign = clinic._id;
-            console.log(`Assigning clinicId ${clinicIdToAssign} to patient based on selected clinic: ${clinicName}`);
-        } catch (error) {
-            console.error("Error getting clinicId:", error);
-            return next(new ErrorHandler("Invalid clinic selected", 400));
-        }
-    } else {
-        console.log(`No clinicId assigned - req.user:`, req.user ? { role: req.user.role, clinicId: req.user.clinicId } : 'null', 'clinicName:', clinicName);
     }
+    // Les patients qui s'inscrivent eux-mêmes n'ont pas de clinicId
+    // Ils choisiront la clinique lors de la création de leur premier appointment
     
     user = await User.create({ 
         firstName, 
@@ -364,10 +347,8 @@ export const getAllPatients = chatchAsyncErrors(async (req, res, next) => {
             .select("firstName lastName email phone CIN dob gender")
             .sort({ firstName: 1, lastName: 1 });
     } else if (req.user.role === "Admin" || req.user.role === "Receptionist") {
-        // Admin et Receptionist : voir seulement les patients de leur clinique
-        // Inclure les patients qui ont :
-        // 1. Un clinicId correspondant à leur clinique
-        // 2. OU des appointments dans leur clinique (pour les patients créés avant cette modification)
+        // Admin et Receptionist : voir seulement les patients qui ont des appointments dans leur clinique
+        // Les patients sont liés aux cliniques via leurs appointments, pas via un clinicId fixe
         if (!req.user.clinicId) {
             return res.status(200).json({
                 success: true,
@@ -385,19 +366,14 @@ export const getAllPatients = chatchAsyncErrors(async (req, res, next) => {
             appointments.map(apt => apt.patientId?.toString()).filter(Boolean)
         )].map(id => new mongoose.Types.ObjectId(id));
         
-        // Construire la query : patients avec clinicId OU patients avec appointments dans la clinique
-        const orConditions = [{ clinicId: req.user.clinicId }];
-        if (patientIdsFromAppointments.length > 0) {
-            orConditions.push({ _id: { $in: patientIdsFromAppointments } });
-        }
-        
-        // Si aucune condition, retourner un tableau vide
-        if (orConditions.length === 0) {
+        // Si aucun patient n'a d'appointments dans cette clinique, retourner un tableau vide
+        if (patientIdsFromAppointments.length === 0) {
             patients = [];
         } else {
+            // Construire la query : patients avec appointments dans la clinique
             const query = { 
                 role: "Patient",
-                $or: orConditions
+                _id: { $in: patientIdsFromAppointments }
             };
             
             // Ajouter les conditions isActive
@@ -417,7 +393,7 @@ export const getAllPatients = chatchAsyncErrors(async (req, res, next) => {
             }
             
             patients = await User.find(query)
-                .select("firstName lastName email phone CIN dob gender clinicId")
+                .select("firstName lastName email phone CIN dob gender")
                 .sort({ firstName: 1, lastName: 1 });
         }
     } else if (req.user.role === "Doctor") {

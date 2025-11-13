@@ -42,11 +42,15 @@ router.get("/admins/unassigned", isAuthenticated, requireRole(['SuperAdmin']), g
 router.get("/doctors", isAdminAuthenticated, getAllDoctors);
 router.get("/doctors/clinic/:clinicName", getDoctorsByClinic); // Public endpoint pour le frontend
 router.get("/patients", isAdminAuthenticated, getAllPatients); // Admin, Receptionist et SuperAdmin peuvent voir les patients
+
+// IMPORTANT: Les routes spécifiques (comme /me) doivent être définies AVANT les routes paramétrées (comme /:id)
+// Sinon Express va matcher /patient/me avec /patient/:id et traiter "me" comme un paramètre
+router.get("/admin/me", isAdminAuthenticated, getUserDetails);
+router.get("/patient/me", isPatientAuthenticated, getUserDetails);
+
 router.get("/patient/:id", isAdminAuthenticated, getPatientById); // Détails d'un patient
 router.put("/patient/:id", isAdminAuthenticated, requireRole(['Admin', 'SuperAdmin', 'Receptionist']), updatePatient); // Modifier un patient
 router.delete("/patient/:id", isAdminAuthenticated, requireRole(['Admin', 'SuperAdmin', 'Receptionist']), deletePatient); // Supprimer un patient
-router.get("/admin/me", isAdminAuthenticated, getUserDetails);
-router.get("/patient/me", isPatientAuthenticated, getUserDetails);
 router.get("/admin/logout", isAdminAuthenticated, logoutAdmin);
 router.get("/patient/logout", isPatientAuthenticated, logoutPatient);
 router.post("/doctor/addnew", isAdminAuthenticated, addNewDoctor);

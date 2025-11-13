@@ -16,23 +16,8 @@ const Register = () => {
   const [gender, setGender] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [clinicName, setClinicName] = useState('');
-  const [clinics, setClinics] = useState([]);
 
   const navigateTo = useNavigate();
-
-  // Récupérer la liste des cliniques au chargement
-  useEffect(() => {
-    const fetchClinics = async () => {
-      try {
-        const { data } = await axios.get('http://localhost:4000/api/v1/clinics');
-        setClinics(data.clinics || []);
-      } catch (error) {
-        console.error('Error fetching clinics:', error);
-      }
-    };
-    fetchClinics();
-  }, []);
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -45,14 +30,10 @@ const Register = () => {
       return toast.error('Password and confirm password must match');
     }
 
-    if (!clinicName) {
-      return toast.error('Please select a clinic');
-    }
-
     try {
       const response = await axios.post(
         'http://localhost:4000/api/v1/user/patient/register',
-        { firstName, lastName, phone, CIN, email, dob, gender, password, confirmPassword, role: 'Patient', clinicName },
+        { firstName, lastName, phone, CIN, email, dob, gender, password, confirmPassword, role: 'Patient' },
         {
           headers: { 'Content-Type': 'application/json' },
           withCredentials: true,
@@ -126,19 +107,6 @@ const Register = () => {
             </option>
             <option value='Male'>Male</option>
             <option value='Female'>Female</option>
-          </select>
-          <select 
-            value={clinicName} 
-            onChange={(e) => setClinicName(e.target.value)}
-            required
-            style={{ width: '100%' }}
-          >
-            <option value='' disabled>Select Clinic *</option>
-            {clinics.map((clinic) => (
-              <option key={clinic._id} value={clinic.name}>
-                {clinic.name}
-              </option>
-            ))}
           </select>
         </div>
         <div>

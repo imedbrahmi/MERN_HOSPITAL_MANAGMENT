@@ -26,12 +26,22 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
     const clinicId = await getClinicIdByName(clinicName, next);
     if (!clinicId) return; // Erreur déjà gérée dans getClinicIdByName
     
+    // S'assurer que clinicId est un ObjectId
+    const mongoose = (await import("mongoose")).default;
+    const clinicIdObjectId = mongoose.Types.ObjectId.isValid(clinicId) 
+        ? new mongoose.Types.ObjectId(clinicId) 
+        : clinicId;
+    
+    console.log(`[postAppointment] Clinic "${clinicName}" converted to clinicId:`, clinicIdObjectId, `(type: ${typeof clinicIdObjectId})`);
+    
     // Vérifier que le réceptionniste/admin ne peut créer des appointments que pour sa clinique
+    // MAIS permettre aux patients de créer des appointments dans n'importe quelle clinique
     if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
-        if (req.user.clinicId.toString() !== clinicId.toString()) {
+        if (req.user.clinicId.toString() !== clinicIdObjectId.toString()) {
             return next(new ErrorHandler("You can only create appointments for your own clinic", 403));
         }
     }
+    // Les patients peuvent créer des appointments dans n'importe quelle clinique (pas de restriction)
     
     // Rechercher le docteur par firstName, department et clinicId
     // Si doctor_lastName est fourni, l'utiliser pour affiner la recherche
@@ -39,7 +49,7 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
          firstName: doctor_firstName,
          role: "Doctor",
          doctorDepartment: department,
-         clinicId: clinicId, // Vérifier que le docteur appartient à la même clinique
+         clinicId: clinicIdObjectId, // Vérifier que le docteur appartient à la même clinique
     };
     
     // Si lastName est fourni, l'ajouter à la requête
@@ -194,8 +204,17 @@ export const postAppointment = chatchAsyncErrors(async (req, res, next) => {
         doctorId,
         patientId,
         address,
-        clinicId,
-    })
+        clinicId: clinicIdObjectId, // Utiliser l'ObjectId converti
+    });
+    
+    console.log(`[postAppointment] Appointment created:`, {
+        appointmentId: appointment._id,
+        patientId: appointment.patientId,
+        clinicId: appointment.clinicId,
+        clinicName: clinicName,
+        appointment_date: appointment.appointment_date
+    });
+    
     res.status(200).json({
         success: true,
         message: "Appointment created successfully",
@@ -212,10 +231,13 @@ export const getAllAppointments = chatchAsyncErrors(async (req, res, next) => {
     } else if ((req.user.role === "Admin" || req.user.role === "Receptionist") && req.user.clinicId) {
         // Admin et Receptionist : filtrer par sa clinique
         query.clinicId = req.user.clinicId;
+        console.log(`[getAllAppointments] Filtering by clinicId:`, req.user.clinicId, `for role:`, req.user.role);
     }
     // SuperAdmin : pas de filtre, voit tous les rendez-vous
     
     const appointments = await Appointment.find(query);
+    console.log(`[getAllAppointments] Found ${appointments.length} appointments for user:`, req.user.role, `clinicId:`, req.user.clinicId);
+    
     res.status(200).json({
         success: true,
         message: "All appointments fetched successfully",
@@ -270,9 +292,17 @@ export const getMyAppointments = chatchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler("Only patients can view their appointments", 403));
     }
 
+    console.log(`[getMyAppointments] Fetching appointments for patient:`, req.user._id);
+    
     const appointments = await Appointment.find({ patientId: req.user._id })
         .populate("doctorId", "firstName lastName doctorDepartment")
+        .populate("clinicId", "name")
         .sort({ appointment_date: -1 });
+    
+    console.log(`[getMyAppointments] Found ${appointments.length} appointments for patient:`, req.user._id);
+    if (appointments.length > 0) {
+        console.log(`[getMyAppointments] First appointment clinicId:`, appointments[0].clinicId);
+    }
 
     res.status(200).json({
         success: true,

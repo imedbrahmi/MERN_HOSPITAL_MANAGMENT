@@ -8,7 +8,7 @@ import { Context } from '../main';
 
 
 const AppointmentForm = () => {
-    const { isAuthenticated } = useContext(Context);
+    const { isAuthenticated, user } = useContext(Context);
     const navigate = useNavigate();
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
@@ -44,6 +44,24 @@ const AppointmentForm = () => {
         };
         fetchClinics();
     }, []);
+
+    // Si le patient est authentifié, pré-remplir les champs avec ses informations
+    useEffect(() => {
+        if (isAuthenticated && user && user.role === 'Patient') {
+            if (user.firstName) setFirstName(user.firstName);
+            if (user.lastName) setLastName(user.lastName);
+            if (user.phone) setPhone(user.phone);
+            if (user.CIN) setCIN(user.CIN);
+            if (user.email) setEmail(user.email);
+            if (user.dob) {
+                // Convertir la date en format YYYY-MM-DD pour l'input date
+                const dobDate = new Date(user.dob);
+                const dobString = dobDate.toISOString().split('T')[0];
+                setDob(dobString);
+            }
+            if (user.gender) setGender(user.gender);
+        }
+    }, [isAuthenticated, user]);
 
     // Récupérer les docteurs et départements quand une clinique est sélectionnée
     useEffect(() => {
@@ -93,6 +111,25 @@ const AppointmentForm = () => {
             return;
         }
         
+        // Vérifier que le patient est bien authentifié en vérifiant le cookie
+        try {
+            // Vérifier que le patient a bien un token en faisant une requête de vérification
+            await axios.get('http://localhost:4000/api/v1/user/patient/me', {
+                withCredentials: true
+            });
+        } catch (authError) {
+            const errorMessage = authError.response?.data?.message || authError.message;
+            const status = authError.response?.status;
+            console.error('Authentication check failed:', {
+                status,
+                message: errorMessage,
+                error: authError.response?.data
+            });
+            toast.error(errorMessage || 'Please login again to book an appointment');
+            navigate('/login');
+            return;
+        }
+        
         try {
             const hasVisitedBool = Boolean(hasVisited);
             
@@ -104,7 +141,13 @@ const AppointmentForm = () => {
             
             // Préparer les données avec la date + heure complète
             // Format: YYYY-MM-DD HH:MM
-            const dateOnly = appointmentDate.split('T')[0] || appointmentDate.split(' ')[0];
+            // Extraire seulement la date (sans l'heure si elle existe déjà)
+            let dateOnly = appointmentDate;
+            if (appointmentDate.includes('T')) {
+                dateOnly = appointmentDate.split('T')[0];
+            } else if (appointmentDate.includes(' ')) {
+                dateOnly = appointmentDate.split(' ')[0];
+            }
             const fullDateTime = `${dateOnly} ${selectedTimeSlot}`;
             
             const appointmentData = {
@@ -132,7 +175,8 @@ const AppointmentForm = () => {
                  headers: { "Content-Type": "application/json" }
                 }
             );
-            toast.success(data.message);
+            console.log("Appointment created successfully:", data);
+            toast.success(data.message || "Appointment created successfully");
             setFirstName('');
             setLastName('');
             setPhone('');
@@ -151,12 +195,32 @@ const AppointmentForm = () => {
             setAvailableSlots([]);
             setSelectedTimeSlot('');
         } catch (error) {
-            const errorMessage = error.response?.data?.message || 'Failed to book appointment';
-            toast.error(errorMessage);
+            console.error("Error creating appointment:", error);
+            const errorMessage = error.response?.data?.message || error.message || 'Failed to book appointment';
+            const errorStatus = error.response?.status;
+            
+            console.error("Error details:", {
+                status: errorStatus,
+                message: errorMessage,
+                data: error.response?.data,
+                fullError: error
+            });
+            
+            // Toujours afficher l'erreur avec un toast
+            toast.error(errorMessage, {
+                position: "top-center",
+                autoClose: 5000,
+                hideProgressBar: false,
+                closeOnClick: true,
+                pauseOnHover: true,
+            });
             
             // Si l'erreur est 401 ou 403, rediriger vers la page de login
-            if (error.response?.status === 401 || error.response?.status === 403) {
-                toast.info('Please login to continue');
+            if (errorStatus === 401 || errorStatus === 403) {
+                toast.info('Please login to continue', {
+                    position: "top-center",
+                    autoClose: 3000,
+                });
                 setTimeout(() => {
                     navigate('/login');
                 }, 2000);

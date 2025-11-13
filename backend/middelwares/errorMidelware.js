@@ -16,11 +16,11 @@ export const errorMidelware = (err,req,res,next) =>{
    }
    if (err.name === "JsonWebTokenError"){
     const message = `Json Web Token is Invalid, Try Again`;
-    err = new ErrorHandler(message,400);
+    err = new ErrorHandler(message,401); // 401 Unauthorized au lieu de 400
    }
    if (err.name === "TokenExpiredError"){
     const message = `Json Web Token is Expired, Try Again`;
-    err = new ErrorHandler(message,400);
+    err = new ErrorHandler(message,401); // 401 Unauthorized au lieu de 400
    }
    if(err.name === "CastError"){
     const message = `Resource not found. Invalid: ${err.path}: ${err.value}`;

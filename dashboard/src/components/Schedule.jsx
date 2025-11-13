@@ -12,9 +12,11 @@ const Schedule = () => {
 
   const [formData, setFormData] = useState({
     selectedDays: [],
+    selectedDates: [], // Nouvelles dates spécifiques
     timeSlots: [{ startTime: "", endTime: "" }],
     duration: 30,
     isAvailable: true,
+    useCalendar: false, // Toggle entre jours de la semaine et calendrier
   });
 
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
@@ -67,13 +69,29 @@ const Schedule = () => {
     setFormData({ ...formData, timeSlots: newTimeSlots });
   };
 
+  const handleDateToggle = (date) => {
+    setFormData(prev => ({
+      ...prev,
+      selectedDates: prev.selectedDates.includes(date)
+        ? prev.selectedDates.filter(d => d !== date)
+        : [...prev.selectedDates, date]
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
-    if (formData.selectedDays.length === 0) {
-      toast.error("Please select at least one day");
-      return;
+    if (formData.useCalendar) {
+      if (formData.selectedDates.length === 0) {
+        toast.error("Please select at least one date");
+        return;
+      }
+    } else {
+      if (formData.selectedDays.length === 0) {
+        toast.error("Please select at least one day");
+        return;
+      }
     }
     
     if (formData.timeSlots.some(slot => !slot.startTime || !slot.endTime)) {
@@ -84,32 +102,56 @@ const Schedule = () => {
     try {
       if (editingSchedule) {
         // Update single schedule
+        const updateData = {
+          startTime: formData.timeSlots[0].startTime,
+          endTime: formData.timeSlots[0].endTime,
+          duration: formData.duration,
+          isAvailable: formData.isAvailable,
+        };
+        
+        if (formData.useCalendar && formData.selectedDates.length > 0) {
+          updateData.date = formData.selectedDates[0];
+        } else if (formData.selectedDays.length > 0) {
+          updateData.dayOfWeek = formData.selectedDays[0];
+        }
+        
         await axios.put(
           `http://localhost:4000/api/v1/schedule/${editingSchedule._id}`,
-          {
-            dayOfWeek: editingSchedule.dayOfWeek,
-            startTime: formData.timeSlots[0].startTime,
-            endTime: formData.timeSlots[0].endTime,
-            duration: formData.duration,
-            isAvailable: formData.isAvailable,
-          },
+          updateData,
           { withCredentials: true }
         );
         toast.success("Schedule updated successfully");
       } else {
         // Create multiple schedules
         const schedulesToCreate = [];
-        formData.selectedDays.forEach(day => {
-          formData.timeSlots.forEach(slot => {
-            schedulesToCreate.push({
-              dayOfWeek: day,
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              duration: formData.duration,
-              isAvailable: formData.isAvailable,
+        
+        if (formData.useCalendar) {
+          // Utiliser les dates spécifiques du calendrier
+          formData.selectedDates.forEach(date => {
+            formData.timeSlots.forEach(slot => {
+              schedulesToCreate.push({
+                date: date,
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                duration: formData.duration,
+                isAvailable: formData.isAvailable,
+              });
             });
           });
-        });
+        } else {
+          // Utiliser les jours de la semaine
+          formData.selectedDays.forEach(day => {
+            formData.timeSlots.forEach(slot => {
+              schedulesToCreate.push({
+                dayOfWeek: day,
+                startTime: slot.startTime,
+                endTime: slot.endTime,
+                duration: formData.duration,
+                isAvailable: formData.isAvailable,
+              });
+            });
+          });
+        }
 
         // Créer tous les schedules avec gestion des erreurs
         const results = await Promise.allSettled(
@@ -137,9 +179,11 @@ const Schedule = () => {
       setEditingSchedule(null);
       setFormData({
         selectedDays: [],
+        selectedDates: [],
         timeSlots: [{ startTime: "", endTime: "" }],
         duration: 30,
         isAvailable: true,
+        useCalendar: false,
       });
       fetchSchedules();
     } catch (error) {
@@ -149,11 +193,14 @@ const Schedule = () => {
 
   const handleEdit = (schedule) => {
     setEditingSchedule(schedule);
+    const useCalendar = !!schedule.date;
     setFormData({
-      selectedDays: [schedule.dayOfWeek],
+      selectedDays: schedule.date ? [] : [schedule.dayOfWeek],
+      selectedDates: schedule.date ? [new Date(schedule.date).toISOString().split('T')[0]] : [],
       timeSlots: [{ startTime: schedule.startTime, endTime: schedule.endTime }],
       duration: schedule.duration,
       isAvailable: schedule.isAvailable,
+      useCalendar: useCalendar,
     });
     setShowForm(true);
   };
@@ -190,9 +237,11 @@ const Schedule = () => {
             setEditingSchedule(null);
             setFormData({
               selectedDays: [],
+              selectedDates: [],
               timeSlots: [{ startTime: "", endTime: "" }],
               duration: 30,
               isAvailable: true,
+              useCalendar: false,
             });
           }}
           style={{
@@ -223,11 +272,110 @@ const Schedule = () => {
             {editingSchedule ? "Edit Schedule" : "Add New Schedule"}
           </h3>
           <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "25px" }}>
-            {/* Multi-select Days */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-              <label style={{ fontSize: "16px", fontWeight: "600", color: "#333", marginBottom: "10px" }}>
-                Select Days * (Multiple selection)
+            {/* Toggle entre jours de la semaine et calendrier */}
+            <div style={{ display: "flex", alignItems: "center", gap: "15px", marginBottom: "20px" }}>
+              <label style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                gap: "10px",
+                fontSize: "16px",
+                fontWeight: "500",
+                color: "#555",
+                cursor: "pointer"
+              }}>
+                <input
+                  type="checkbox"
+                  checked={formData.useCalendar}
+                  onChange={(e) => {
+                    setFormData({
+                      ...formData,
+                      useCalendar: e.target.checked,
+                      selectedDays: [],
+                      selectedDates: []
+                    });
+                  }}
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    cursor: "pointer",
+                  }}
+                />
+                Use Calendar (Select Specific Dates)
               </label>
+            </div>
+
+            {/* Calendrier pour sélectionner des dates spécifiques */}
+            {formData.useCalendar ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "16px", fontWeight: "600", color: "#333", marginBottom: "10px" }}>
+                  Select Dates * (Multiple selection)
+                </label>
+                <div style={{ 
+                  display: "grid", 
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", 
+                  gap: "10px",
+                  marginBottom: "20px"
+                }}>
+                  {/* Générer les dates pour les 30 prochains jours */}
+                  {Array.from({ length: 30 }, (_, i) => {
+                    const date = new Date();
+                    date.setDate(date.getDate() + i);
+                    const dateStr = date.toISOString().split('T')[0];
+                    const dayName = date.toLocaleDateString('en-US', { weekday: 'short' });
+                    const dayNum = date.getDate();
+                    const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+                    
+                    return (
+                      <button
+                        key={dateStr}
+                        type="button"
+                        onClick={() => handleDateToggle(dateStr)}
+                        style={{
+                          padding: "12px 16px",
+                          backgroundColor: formData.selectedDates.includes(dateStr) ? "#4a90e2" : "#fff",
+                          color: formData.selectedDates.includes(dateStr) ? "#fff" : "#333",
+                          border: `2px solid ${formData.selectedDates.includes(dateStr) ? "#4a90e2" : "#ddd"}`,
+                          borderRadius: "8px",
+                          cursor: "pointer",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                          transition: "all 0.3s",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!formData.selectedDates.includes(dateStr)) {
+                            e.target.style.backgroundColor = "#e8f4f8";
+                            e.target.style.borderColor = "#4a90e2";
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (!formData.selectedDates.includes(dateStr)) {
+                            e.target.style.backgroundColor = "#fff";
+                            e.target.style.borderColor = "#ddd";
+                          }
+                        }}
+                      >
+                        <span style={{ fontSize: "12px", opacity: 0.8 }}>{dayName}</span>
+                        <span style={{ fontSize: "18px", fontWeight: "600" }}>{dayNum}</span>
+                        <span style={{ fontSize: "11px", opacity: 0.7 }}>{monthName}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {formData.selectedDates.length > 0 && (
+                  <p style={{ marginTop: "10px", color: "#27ae60", fontWeight: "600", fontSize: "14px" }}>
+                    Selected: {formData.selectedDates.length} date(s)
+                  </p>
+                )}
+              </div>
+            ) : (
+              /* Multi-select Days */
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                <label style={{ fontSize: "16px", fontWeight: "600", color: "#333", marginBottom: "10px" }}>
+                  Select Days * (Multiple selection)
+                </label>
               <div style={{ 
                 display: "grid", 
                 gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", 
@@ -271,7 +419,8 @@ const Schedule = () => {
                   Selected: {formData.selectedDays.join(", ")}
                 </p>
               )}
-            </div>
+              </div>
+            )}
 
             {/* Multiple Time Slots */}
             <div style={{ marginTop: "20px" }}>
@@ -469,7 +618,26 @@ const Schedule = () => {
               }}
             >
               <div>
-                <h4 style={{ margin: 0, marginBottom: "10px" }}>{schedule.dayOfWeek}</h4>
+                <h4 style={{ margin: 0, marginBottom: "10px" }}>
+                  {schedule.date 
+                    ? new Date(schedule.date).toLocaleDateString('en-US', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                      })
+                    : schedule.dayOfWeek
+                  }
+                </h4>
+                {schedule.date && (
+                  <p style={{ margin: "5px 0", color: "#666", fontSize: "14px" }}>
+                    <strong>Date:</strong> {new Date(schedule.date).toLocaleDateString('en-US', { 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    })}
+                  </p>
+                )}
                 <p style={{ margin: "5px 0" }}>
                   <strong>Time:</strong> {schedule.startTime} - {schedule.endTime}
                 </p>
