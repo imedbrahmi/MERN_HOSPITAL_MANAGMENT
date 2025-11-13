@@ -31,19 +31,13 @@ const App = () => {
         if (response.data && response.data.user) {
           setIsAuthenticated(true);
           setUser(response.data.user);
-          console.log("Patient authenticated on mount:", response.data.user);
         } else {
-          console.log("No user data in response");
           setIsAuthenticated(false);
           setUser({});
         }
       } catch (err) {
-        // Si l'erreur est 401 ou 400, l'utilisateur n'est pas authentifié (normal)
-        // On ne fait rien, juste on s'assure que l'état est correct
         const status = err.response?.status;
-        const errorMessage = err.response?.data?.message || err.message;
         if (status === 401 || status === 400) {
-          console.log("User not authenticated (status:", status, "message:", errorMessage, ")");
           setIsAuthenticated(false);
           setUser({});
         } else {

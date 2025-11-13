@@ -3,8 +3,6 @@ import { pacientRegister, login, addNewAdmin, addNewReceptionist, getAllDoctors,
 from "../controller/userController.js";
 import { isAdminAuthenticated, isPatientAuthenticated, isAuthenticated, requireRole } from "../middelwares/auth.js";
 
-
-
 const router = express.Router();
 
 // Route pour enregistrer un patient : accessible publiquement (pour auto-inscription) ou avec authentification (pour admin/réceptionniste)
