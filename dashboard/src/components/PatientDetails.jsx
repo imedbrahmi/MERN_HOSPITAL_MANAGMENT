@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import axios from "axios";
+import { API_BASE_URL } from '../utils/api';
 
 const PatientDetails = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -22,7 +23,7 @@ const PatientDetails = () => {
   const fetchPatientDetails = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/user/patient/${id}`,
+        `${API_BASE_URL}/user/patient/${id}`,
         { withCredentials: true }
       );
       setPatient(data.patient);
@@ -36,7 +37,7 @@ const PatientDetails = () => {
   const fetchPatientAppointments = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/appointment/getAll`,
+        `${API_BASE_URL}/appointment/getAll`,
         { withCredentials: true }
       );
       // Filtrer les appointments pour ce patient

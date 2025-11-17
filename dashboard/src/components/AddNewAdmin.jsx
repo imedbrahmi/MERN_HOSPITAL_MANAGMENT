@@ -3,6 +3,7 @@ import { Context } from "../main";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { API_BASE_URL } from '../utils/api';
 
 const AddNewAdmin = () => {
   const { isAuthenticated } = useContext(Context);
@@ -23,7 +24,7 @@ const AddNewAdmin = () => {
     const fetchClinics = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/v1/clinics/all",
+          `${API_BASE_URL}/clinics/all`,
           { withCredentials: true }
         );
         setClinics(data.clinics || []);
@@ -38,7 +39,7 @@ const AddNewAdmin = () => {
     e.preventDefault();
     try {
       const { data } = await axios.post(
-        "http://localhost:4000/api/v1/user/admin/addnew",
+        `${API_BASE_URL}/user/admin/addnew`,
         { firstName, lastName, email, phone, CIN: cin, dob, gender, password, clinicId: clinicId || null },
         {
           withCredentials: true,

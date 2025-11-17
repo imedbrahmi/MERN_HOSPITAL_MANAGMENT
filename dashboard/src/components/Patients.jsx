@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const Patients = () => {
   const [patients, setPatients] = useState([]);
@@ -20,7 +21,7 @@ const Patients = () => {
       if (searchTerm) params.append("search", searchTerm);
       
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/user/patients?${params.toString()}`,
+        `${API_BASE_URL}/user/patients?${params.toString()}`,
         { withCredentials: true }
       );
       setPatients(data.patients || []);
@@ -34,7 +35,7 @@ const Patients = () => {
     if (!window.confirm("Are you sure you want to delete this patient?")) return;
     try {
       await axios.delete(
-        `http://localhost:4000/api/v1/user/patient/${patientId}`,
+        `${API_BASE_URL}/user/patient/${patientId}`,
         { withCredentials: true }
       );
       toast.success("Patient deleted successfully");

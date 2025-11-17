@@ -28,6 +28,7 @@ import RouteGuard from './components/RouteGuard'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
 import { Context } from './main'
+import { API_BASE_URL } from './utils/api'
 import './App.css'
 
 
@@ -38,7 +39,7 @@ const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context)
  useEffect(() => {
   const fetchUser = async () => {
     try {
-      const response = await axios.get('http://localhost:4000/api/v1/user/admin/me', {
+      const response = await axios.get(`${API_BASE_URL}/user/admin/me`, {
         withCredentials: true
       })
       setUser(response.data.user)

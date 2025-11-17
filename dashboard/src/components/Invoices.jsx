@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const Invoices = () => {
   const [invoices, setInvoices] = useState([]);
@@ -28,7 +29,7 @@ const Invoices = () => {
   const fetchInvoices = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/invoice",
+        `${API_BASE_URL}/invoice`,
         { withCredentials: true }
       );
       setInvoices(data.invoices || []);
@@ -41,7 +42,7 @@ const Invoices = () => {
   const fetchPatients = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/user/patients",
+        `${API_BASE_URL}/user/patients`,
         { withCredentials: true }
       );
       setPatients(data.patients || []);
@@ -72,7 +73,7 @@ const Invoices = () => {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:4000/api/v1/invoice/create",
+        `${API_BASE_URL}/invoice/create`,
         formData,
         { withCredentials: true }
       );
@@ -98,7 +99,7 @@ const Invoices = () => {
 
     try {
       await axios.put(
-        `http://localhost:4000/api/v1/invoice/${invoiceId}/payment`,
+        `${API_BASE_URL}/invoice/${invoiceId}/payment`,
         { amount: Number(amount), paymentMethod },
         { withCredentials: true }
       );
@@ -515,7 +516,7 @@ const Invoices = () => {
                       onClick={async () => {
                         try {
                           const response = await axios.get(
-                            `http://localhost:4000/api/v1/invoice/${invoice._id}/pdf`,
+                            `${API_BASE_URL}/invoice/${invoice._id}/pdf`,
                             { 
                               withCredentials: true,
                               responseType: 'blob'

@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { Context } from "../main";
 import { useNavigate } from "react-router-dom";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { API_BASE_URL } from '../utils/api';
 
 const Clinics = () => {
   const [clinics, setClinics] = useState([]);
@@ -14,7 +15,7 @@ const Clinics = () => {
     const fetchClinics = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/v1/clinics/all",
+          `${API_BASE_URL}/clinics/all`,
           { withCredentials: true }
         );
         setClinics(data.clinics || []);
@@ -32,13 +33,13 @@ const Clinics = () => {
 
     try {
       const { data } = await axios.delete(
-        `http://localhost:4000/api/v1/clinics/${clinicId}`,
+        `${API_BASE_URL}/clinics/${clinicId}`,
         { withCredentials: true }
       );
       toast.success(data.message);
       // Rafraîchir la liste
       const { data: updatedData } = await axios.get(
-        "http://localhost:4000/api/v1/clinics/all",
+        `${API_BASE_URL}/clinics/all`,
         { withCredentials: true }
       );
       setClinics(updatedData.clinics || []);

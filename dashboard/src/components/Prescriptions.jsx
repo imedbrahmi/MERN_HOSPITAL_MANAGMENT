@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const Prescriptions = () => {
   const [prescriptions, setPrescriptions] = useState([]);
@@ -26,7 +27,7 @@ const Prescriptions = () => {
   const fetchPrescriptions = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/prescription/doctor/${user._id}`,
+        `${API_BASE_URL}/prescription/doctor/${user._id}`,
         { withCredentials: true }
       );
       setPrescriptions(data.prescriptions || []);
@@ -39,7 +40,7 @@ const Prescriptions = () => {
   const fetchPatients = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/user/patients",
+        `${API_BASE_URL}/user/patients`,
         { withCredentials: true }
       );
       setPatients(data.patients || []);
@@ -70,7 +71,7 @@ const Prescriptions = () => {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:4000/api/v1/prescription/create",
+        `${API_BASE_URL}/prescription/create`,
         formData,
         { withCredentials: true }
       );
@@ -398,7 +399,7 @@ const Prescriptions = () => {
                 onClick={async () => {
                   try {
                     const response = await axios.get(
-                      `http://localhost:4000/api/v1/prescription/${prescription._id}/pdf`,
+                      `${API_BASE_URL}/prescription/${prescription._id}/pdf`,
                       { 
                         withCredentials: true,
                         responseType: 'blob'

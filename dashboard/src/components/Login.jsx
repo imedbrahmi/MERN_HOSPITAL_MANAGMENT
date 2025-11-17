@@ -4,6 +4,7 @@ import { useState, useContext } from 'react'
 import { toast } from 'react-toastify'
 import { useNavigate, Navigate } from 'react-router-dom'
 import axios from 'axios'
+import { API_BASE_URL } from '../utils/api'
 
 
 const Login = () => {
@@ -30,7 +31,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:4000/api/v1/user/login',
+        `${API_BASE_URL}/user/login`,
         { email, password, confirmPassword,role: 'Admin' },
         {
           headers: { 'Content-Type': 'application/json' },

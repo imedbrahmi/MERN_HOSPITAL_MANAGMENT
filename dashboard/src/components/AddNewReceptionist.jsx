@@ -3,6 +3,7 @@ import React, { useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const AddNewReceptionist = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -34,7 +35,7 @@ const AddNewReceptionist = () => {
     e.preventDefault();
     try {
       await axios.post(
-        "http://localhost:4000/api/v1/user/receptionist/addnew",
+        `${API_BASE_URL}/user/receptionist/addnew`,
         formData,
         { withCredentials: true }
       );

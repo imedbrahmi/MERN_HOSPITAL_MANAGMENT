@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import axios from "axios";
+import { API_BASE_URL } from '../utils/api';
 
 const EditPatient = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -26,7 +27,7 @@ const EditPatient = () => {
   const fetchPatient = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/user/patient/${id}`,
+        `${API_BASE_URL}/user/patient/${id}`,
         { withCredentials: true }
       );
       const patient = data.patient;
@@ -51,7 +52,7 @@ const EditPatient = () => {
 
     try {
       await axios.put(
-        `http://localhost:4000/api/v1/user/patient/${id}`,
+        `${API_BASE_URL}/user/patient/${id}`,
         {
           firstName,
           lastName,

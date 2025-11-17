@@ -19,6 +19,7 @@ import { FaCalendarPlus } from 'react-icons/fa'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { API_BASE_URL } from '../utils/api'
 
 
 
@@ -99,7 +100,7 @@ const SideBar = () => {
 
     const handelLogout = async() => {
       try {
-          const res = await axios.get("http://localhost:4000/api/v1/user/admin/logout", {
+          const res = await axios.get(`${API_BASE_URL}/user/admin/logout`, {
               withCredentials: true,
           });
           toast.success(res.data.message);

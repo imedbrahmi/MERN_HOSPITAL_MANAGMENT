@@ -3,6 +3,7 @@ import { Navigate, useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import axios from "axios";
+import { API_BASE_URL } from '../utils/api';
 
 const EditDoctor = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -41,7 +42,7 @@ const EditDoctor = () => {
   const fetchClinics = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/clinics/all",
+        `${API_BASE_URL}/clinics/all`,
         { withCredentials: true }
       );
       setClinics(data.clinics || []);
@@ -53,7 +54,7 @@ const EditDoctor = () => {
   const fetchDoctor = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/user/doctors`,
+        `${API_BASE_URL}/user/doctors`,
         { withCredentials: true }
       );
       const doctor = data.doctors.find(d => d._id === id);
@@ -118,7 +119,7 @@ const EditDoctor = () => {
       }
 
       await axios.put(
-        `http://localhost:4000/api/v1/user/doctor/${id}`,
+        `${API_BASE_URL}/user/doctor/${id}`,
         formData,
         {
           withCredentials: true,

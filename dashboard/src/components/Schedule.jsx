@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const Schedule = () => {
   const [schedules, setSchedules] = useState([]);
@@ -30,7 +31,7 @@ const Schedule = () => {
   const fetchSchedules = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/schedule/my-schedule",
+        `${API_BASE_URL}/schedule/my-schedule`,
         { withCredentials: true }
       );
       setSchedules(data.schedules || []);
@@ -116,7 +117,7 @@ const Schedule = () => {
         }
         
         await axios.put(
-          `http://localhost:4000/api/v1/schedule/${editingSchedule._id}`,
+          `${API_BASE_URL}/schedule/${editingSchedule._id}`,
           updateData,
           { withCredentials: true }
         );
@@ -157,7 +158,7 @@ const Schedule = () => {
         const results = await Promise.allSettled(
           schedulesToCreate.map(scheduleData =>
             axios.post(
-              "http://localhost:4000/api/v1/schedule/create",
+              `${API_BASE_URL}/schedule/create`,
               scheduleData,
               { withCredentials: true }
             )
@@ -209,7 +210,7 @@ const Schedule = () => {
     if (!window.confirm("Are you sure you want to delete this schedule?")) return;
     try {
       await axios.delete(
-        `http://localhost:4000/api/v1/schedule/${id}`,
+        `${API_BASE_URL}/schedule/${id}`,
         { withCredentials: true }
       );
       toast.success("Schedule deleted successfully");
