@@ -2,6 +2,7 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import axios from 'axios';
+import { API_BASE_URL } from '../utils/api';
 
 const MessageForm = () => {
     const [firstName, setFirstName] = useState('');
@@ -16,7 +17,7 @@ const MessageForm = () => {
     useEffect(() => {
         const fetchClinics = async () => {
             try {
-                const { data } = await axios.get('http://localhost:4000/api/v1/clinics');
+                const { data } = await axios.get(`${API_BASE_URL}/clinics`);
                 setClinics(data.clinics || []);
             } catch (error) {
                 console.error('Error fetching clinics:', error);
@@ -28,7 +29,7 @@ const MessageForm = () => {
         e.preventDefault();
         try {
             await axios.post(
-                "http://localhost:4000/api/v1/message/send",
+                `${API_BASE_URL}/message/send`,
                 {firstName, lastName, phone, message, email, clinicName},
                 {
                     withCredentials: true,

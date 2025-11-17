@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Hero from "../components/Hero";
+import { API_BASE_URL } from '../utils/api';
 
 const MyInvoices = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -22,7 +23,7 @@ const MyInvoices = () => {
   const fetchInvoices = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/invoice/patient/my-invoices`,
+        `${API_BASE_URL}/invoice/patient/my-invoices`,
         { withCredentials: true }
       );
       console.log("Invoices data:", data);
@@ -44,7 +45,7 @@ const MyInvoices = () => {
 
     try {
       await axios.put(
-        `http://localhost:4000/api/v1/invoice/${invoiceId}/payment`,
+        `${API_BASE_URL}/invoice/${invoiceId}/payment`,
         { amount: Number(amount), paymentMethod },
         { withCredentials: true }
       );
@@ -130,7 +131,7 @@ const MyInvoices = () => {
                         onClick={async () => {
                           try {
                             const response = await axios.get(
-                              `http://localhost:4000/api/v1/invoice/${invoice._id}/pdf`,
+                              `${API_BASE_URL}/invoice/${invoice._id}/pdf`,
                               { 
                                 withCredentials: true,
                                 responseType: 'blob'

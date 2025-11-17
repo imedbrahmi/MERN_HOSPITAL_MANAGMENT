@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Context } from '../main';
 import {GiHamburgerMenu} from 'react-icons/gi'
+import { API_BASE_URL } from '../utils/api';
 
 const NavBar = () => {
     const [show, setShow] = useState(false);
@@ -16,7 +17,7 @@ const NavBar = () => {
         try {
             // Essayer de se déconnecter via l'API (si authentifié)
             try {
-                const res = await axios.get("http://localhost:4000/api/v1/user/patient/logout", {
+                const res = await axios.get(`${API_BASE_URL}/user/patient/logout`, {
                     withCredentials: true,
                 });
                 toast.success(res.data.message);

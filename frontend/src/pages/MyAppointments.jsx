@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Hero from "../components/Hero";
+import { API_BASE_URL } from '../utils/api';
 
 const MyAppointments = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -22,7 +23,7 @@ const MyAppointments = () => {
   const fetchAppointments = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/appointment/patient/my-appointments`,
+        `${API_BASE_URL}/appointment/patient/my-appointments`,
         { withCredentials: true }
       );
       console.log("Appointments data:", data);
@@ -41,7 +42,7 @@ const MyAppointments = () => {
     if (!window.confirm("Are you sure you want to cancel this appointment?")) return;
     try {
       await axios.delete(
-        `http://localhost:4000/api/v1/appointment/${appointmentId}`,
+        `${API_BASE_URL}/appointment/${appointmentId}`,
         { withCredentials: true }
       );
       toast.success("Appointment cancelled successfully");

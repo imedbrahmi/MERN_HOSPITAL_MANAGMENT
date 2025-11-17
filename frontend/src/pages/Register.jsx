@@ -3,6 +3,7 @@ import { Context } from '../main';
 import { Navigate, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../utils/api';
 
 const Register = () => {
   const { isAuthenticated, setIsAuthenticated } = useContext(Context);
@@ -32,7 +33,7 @@ const Register = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:4000/api/v1/user/patient/register',
+        `${API_BASE_URL}/user/patient/register`,
         { firstName, lastName, phone, CIN, email, dob, gender, password, confirmPassword, role: 'Patient' },
         {
           headers: { 'Content-Type': 'application/json' },

@@ -15,6 +15,7 @@ import NavBar from './components/NavBar';
 import axios from 'axios';
 import { Context } from './main';
 import Footer from './components/Footer';
+import { API_BASE_URL } from './utils/api';
 
 const App = () => {
   const { setIsAuthenticated, setUser } = useContext(Context);
@@ -23,7 +24,7 @@ const App = () => {
     const fetchUser = async () => {
       try {
         const response = await axios.get(
-          "http://localhost:4000/api/v1/user/patient/me",
+          `${API_BASE_URL}/user/patient/me`,
           {
             withCredentials: true,
           }
