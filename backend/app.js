@@ -20,15 +20,10 @@ const app = express();
 config({ path: "./config/config.env" });
 
 app.use(cors({
-    origin: [
-        "http://localhost:5173",
-        "http://localhost:5174", 
-        "https://mern-hospital-managment.vercel.app",
-        "https://mern-hospital-managment-2q8w.vercel.app"
-    ],
+    origin: true, // Allow all origins temporarily
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
     exposedHeaders: ["Set-Cookie"],
 }));
 
