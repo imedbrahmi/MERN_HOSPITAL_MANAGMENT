@@ -1,0 +1,93 @@
+@startuml MedFlow_Sequence_Appointment
+!theme plain
+skinparam linetype ortho
+
+title Diagramme de Séquence - Prendre un Rendez-vous\n(Patient crée un Appointment)
+
+actor Patient as Patient
+participant "Frontend\n(React)" as Frontend
+participant "API Gateway\n(Express)" as API
+participant "Auth Middleware" as Auth
+participant "Appointment\nController" as Controller
+participant "Clinic\nController" as ClinicCtrl
+participant "User Model" as UserModel
+participant "Appointment\nModel" as AppointmentModel
+participant "Clinic Model" as ClinicModel
+
+== Initialisation ==
+Patient -> Frontend: Accède à la page de rendez-vous
+Frontend -> Frontend: Charge la liste des cliniques
+Frontend -> Frontend: Charge la liste des départements
+
+== Sélection du Docteur et Date ==
+Patient -> Frontend: Sélectionne une clinique
+Frontend -> API: GET /api/v1/clinics/all
+API -> ClinicModel: find()
+ClinicModel --> API: Liste des cliniques
+API --> Frontend: Liste des cliniques
+
+Patient -> Frontend: Sélectionne un docteur et une date
+Frontend -> API: GET /api/v1/schedule/available-slots\n(doctorId, date)
+API -> AppointmentModel: find() - Vérifier appointments existants
+AppointmentModel --> API: Appointments existants
+API --> Frontend: Créneaux disponibles
+
+== Soumission du Formulaire ==
+Patient -> Frontend: Remplit le formulaire\n(firstName, lastName, phone, CIN,\nemail, dob, gender, address,\nclinicName, doctor, date, time)
+Patient -> Frontend: Clique sur "Submit"
+
+== Authentification ==
+Frontend -> API: POST /api/v1/appointment/post\n(appointmentData, patientToken cookie)
+API -> Auth: Vérifier patientToken
+Auth -> UserModel: Vérifier token JWT
+UserModel --> Auth: User (Patient)
+Auth --> API: req.user = Patient
+
+== Traitement de la Requête ==
+API -> Controller: postAppointment(req, res, next)
+
+== Validation et Conversion ==
+Controller -> Controller: Valider les champs requis
+alt Champs manquants
+    Controller --> Frontend: 400 Bad Request\n"Please fill all required fields"
+else Champs valides
+    Controller -> ClinicCtrl: getClinicIdByName(clinicName)
+    ClinicCtrl -> ClinicModel: findOne({ name: clinicName })
+    ClinicModel --> ClinicCtrl: Clinic document
+    ClinicCtrl --> Controller: clinicId (ObjectId)
+    
+    == Recherche du Docteur ==
+    Controller -> UserModel: find({\n  firstName: doctor_firstName,\n  role: "Doctor",\n  doctorDepartment: department,\n  clinicId: clinicId\n})
+    UserModel --> Controller: Doctor document
+    
+    alt Docteur non trouvé
+        Controller --> Frontend: 400 Bad Request\n"Doctor not found in this clinic"
+    else Docteur trouvé
+        Controller -> Controller: doctorId = doctor._id
+        
+        == Gestion du Patient ==
+        note right: Patient utilise son propre ID\ndepuis le token
+        Controller -> Controller: patientId = req.user._id
+        
+        == Vérification des Conflits ==
+        Controller -> AppointmentModel: findOne({\n  doctorId: doctorId,\n  appointment_date: appointment_date,\n  status: ["Pending", "Accepted"]\n})
+        AppointmentModel --> Controller: existingAppointment
+        
+        alt Conflit détecté
+            Controller --> Frontend: 400 Bad Request\n"Doctor already has an appointment at this time"
+        else Pas de conflit
+            == Création de l'Appointment ==
+            Controller -> AppointmentModel: create({\n  firstName, lastName, phone, CIN,\n  email, dob, gender,\n  appointment_date,\n  department,\n  doctor: {firstName, lastName},\n  doctorId,\n  patientId,\n  address,\n  clinicId,\n  status: "Pending"\n})
+            AppointmentModel --> Controller: Appointment créé
+            
+            Controller --> API: 200 OK\n{success: true, message, appointment}
+            API --> Frontend: 200 OK\nAppointment créé avec succès
+            Frontend -> Frontend: Afficher message de succès
+            Frontend -> Frontend: Réinitialiser le formulaire
+            Frontend --> Patient: Confirmation du rendez-vous
+        end
+    end
+end
+
+@enduml
+

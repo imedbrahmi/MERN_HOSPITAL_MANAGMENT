@@ -1,0 +1,283 @@
+@startuml MedFlow_ERD
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 10
+skinparam shadowing false
+
+title MedFlow - Schéma de Base de Données (ERD)
+
+' ============================================
+' ENTITÉ: USER
+' ============================================
+entity "User" as User {
+  * _id : ObjectId <<PK>>
+  --
+  * firstName : String
+  * lastName : String
+  * email : String <<UNIQUE>>
+  * phone : String
+  * CIN : String <<UNIQUE>>
+  * dob : Date
+  * gender : Enum(Male, Female)
+  * password : String
+  * role : Enum(SuperAdmin, Admin, Doctor, Receptionist, Patient)
+  doctorDepartment : String
+  docAvatar_public_id : String
+  docAvatar_url : String
+  clinicId : ObjectId <<FK>>
+  createdAt : Date
+  updatedAt : Date
+}
+
+' ============================================
+' ENTITÉ: CLINIC
+' ============================================
+entity "Clinic" as Clinic {
+  * _id : ObjectId <<PK>>
+  --
+  * name : String <<UNIQUE>>
+  * address : String
+  * phone : String
+  * email : String <<UNIQUE>>
+  services : String[]
+  tariff_consultation : Number
+  * ownerId : ObjectId <<FK>>
+  isActive : Boolean
+  createdAt : Date
+  updatedAt : Date
+}
+
+' ============================================
+' ENTITÉ: APPOINTMENT
+' ============================================
+entity "Appointment" as Appointment {
+  * _id : ObjectId <<PK>>
+  --
+  * firstName : String
+  lastName : String
+  * phone : String
+  * CIN : String
+  * email : String
+  * dob : Date
+  * gender : Enum(Male, Female)
+  * appointment_date : String
+  * department : String
+  doctor_firstName : String
+  doctor_lastName : String
+  hasVisited : Boolean
+  * doctorId : ObjectId <<FK>>
+  * patientId : ObjectId <<FK>>
+  * address : String
+  * status : Enum(Pending, Accepted, Rejected)
+  * clinicId : ObjectId <<FK>>
+}
+
+' ============================================
+' ENTITÉ: SCHEDULE
+' ============================================
+entity "Schedule" as Schedule {
+  * _id : ObjectId <<PK>>
+  --
+  * doctorId : ObjectId <<FK>>
+  dayOfWeek : Enum(Monday..Sunday)
+  date : Date
+  * startTime : String
+  * endTime : String
+  * duration : Number
+  isAvailable : Boolean
+  * clinicId : ObjectId <<FK>>
+  createdAt : Date
+  updatedAt : Date
+}
+
+' ============================================
+' ENTITÉ: MEDICAL RECORD
+' ============================================
+entity "MedicalRecord" as MedicalRecord {
+  * _id : ObjectId <<PK>>
+  --
+  * patientId : ObjectId <<FK>>
+  * doctorId : ObjectId <<FK>>
+  appointmentId : ObjectId <<FK>>
+  * visitDate : Date
+  * diagnosis : String
+  symptoms : String
+  examination : String
+  treatment : String
+  notes : String
+  vitalSigns_bloodPressure : String
+  vitalSigns_heartRate : Number
+  vitalSigns_temperature : Number
+  vitalSigns_weight : Number
+  vitalSigns_height : Number
+  * clinicId : ObjectId <<FK>>
+  createdAt : Date
+  updatedAt : Date
+}
+
+' ============================================
+' ENTITÉ: MEDICATION (Embedded)
+' ============================================
+entity "Medication" as Medication {
+  name : String
+  dosage : String
+  frequency : String
+  duration : String
+  instructions : String
+}
+
+' ============================================
+' ENTITÉ: PRESCRIPTION
+' ============================================
+entity "Prescription" as Prescription {
+  * _id : ObjectId <<PK>>
+  --
+  * patientId : ObjectId <<FK>>
+  * doctorId : ObjectId <<FK>>
+  appointmentId : ObjectId <<FK>>
+  medicalRecordId : ObjectId <<FK>>
+  * prescriptionDate : Date
+  notes : String
+  pdfUrl : String
+  pdfPublicId : String
+  * clinicId : ObjectId <<FK>>
+  createdAt : Date
+  updatedAt : Date
+}
+
+' ============================================
+' ENTITÉ: INVOICE ITEM (Embedded)
+' ============================================
+entity "InvoiceItem" as InvoiceItem {
+  description : String
+  quantity : Number
+  unitPrice : Number
+  total : Number
+}
+
+' ============================================
+' ENTITÉ: PAYMENT (Embedded)
+' ============================================
+entity "Payment" as Payment {
+  amount : Number
+  paymentMethod : Enum(Cash, Credit Card, Debit Card, Bank Transfer, Check, Other)
+  paymentDate : Date
+  transactionId : String
+  notes : String
+}
+
+' ============================================
+' ENTITÉ: INVOICE
+' ============================================
+entity "Invoice" as Invoice {
+  * _id : ObjectId <<PK>>
+  --
+  * invoiceNumber : String <<UNIQUE>>
+  * patientId : ObjectId <<FK>>
+  appointmentId : ObjectId <<FK>>
+  * subtotal : Number
+  tax : Number
+  discount : Number
+  * total : Number
+  * status : Enum(Pending, Partially Paid, Paid, Cancelled)
+  dueDate : Date
+  notes : String
+  * clinicId : ObjectId <<FK>>
+  * createdBy : ObjectId <<FK>>
+  createdAt : Date
+  updatedAt : Date
+}
+
+' ============================================
+' ENTITÉ: MESSAGE
+' ============================================
+entity "Message" as Message {
+  * _id : ObjectId <<PK>>
+  --
+  * firstName : String
+  lastName : String
+  * phone : String
+  * email : String
+  * message : String
+  * clinicId : ObjectId <<FK>>
+}
+
+' ============================================
+' RELATIONS
+' ============================================
+
+' User - Clinic Relations
+User ||--o{ Clinic : "owns (ownerId)"
+User }o--|| Clinic : "belongs to (clinicId)"
+
+' Appointment Relations
+User ||--o{ Appointment : "patient (patientId)"
+User ||--o{ Appointment : "doctor (doctorId)"
+Clinic ||--o{ Appointment : "clinic (clinicId)"
+
+' Schedule Relations
+User ||--o{ Schedule : "doctor (doctorId)"
+Clinic ||--o{ Schedule : "clinic (clinicId)"
+
+' MedicalRecord Relations
+User ||--o{ MedicalRecord : "patient (patientId)"
+User ||--o{ MedicalRecord : "doctor (doctorId)"
+Appointment ||--o| MedicalRecord : "appointment (appointmentId)"
+Clinic ||--o{ MedicalRecord : "clinic (clinicId)"
+
+' Prescription Relations
+User ||--o{ Prescription : "patient (patientId)"
+User ||--o{ Prescription : "doctor (doctorId)"
+Appointment ||--o| Prescription : "appointment (appointmentId)"
+MedicalRecord ||--o| Prescription : "medicalRecord (medicalRecordId)"
+Clinic ||--o{ Prescription : "clinic (clinicId)"
+Prescription ||--o{ Medication : "contains"
+
+' Invoice Relations
+User ||--o{ Invoice : "patient (patientId)"
+User ||--o{ Invoice : "createdBy (createdBy)"
+Appointment ||--o| Invoice : "appointment (appointmentId)"
+Clinic ||--o{ Invoice : "clinic (clinicId)"
+Invoice ||--o{ InvoiceItem : "contains"
+Invoice ||--o{ Payment : "payments"
+
+' Message Relations
+Clinic ||--o{ Message : "clinic (clinicId)"
+
+note right of User
+  **Rôles possibles:**
+  - SuperAdmin (clinicId optionnel)
+  - Admin (clinicId requis)
+  - Doctor (clinicId requis)
+  - Receptionist (clinicId requis)
+  - Patient (clinicId optionnel)
+end note
+
+note right of Appointment
+  **Statuts:**
+  - Pending (par défaut)
+  - Accepted
+  - Rejected
+end note
+
+note right of Invoice
+  **Statuts:**
+  - Pending (par défaut)
+  - Partially Paid
+  - Paid
+  - Cancelled
+end note
+
+note right of Prescription
+  **Contient:**
+  - Array de Medication
+  (name, dosage, frequency, duration, instructions)
+end note
+
+note right of Invoice
+  **Contient:**
+  - Array de InvoiceItem
+  - Array de Payment
+end note
+
+@enduml
