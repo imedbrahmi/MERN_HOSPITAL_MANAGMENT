@@ -54,7 +54,7 @@ const Login = () => {
     <div className='container form-component'>
       <img src='/logo.png' alt='logo' className='logo'/>
       <h1 className='form-title'>WELCOME TO ZEECARE</h1>
-      <p>Only authorized admins can access this page</p>
+      <p>Only authorized Users can access this page</p>
       <form onSubmit={handleLogin}>
         <input
           type='email'
