@@ -20,12 +20,22 @@ const app = express();
 config({ path: "./config/config.env" });
 
 const allowedOrigins = [
-    ...process.env.FRONTEND_URL.split(','),
-    ...process.env.DASHBOARD_URL.split(',')
+    ...process.env.FRONTEND_URL.split(',').map(url => url.trim()),
+    ...process.env.DASHBOARD_URL.split(',').map(url => url.trim())
 ];
 
 app.use(cors({
-    origin: allowedOrigins,
+    origin: function (origin, callback) {
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        
+        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+        return callback(new Error(msg), false);
+    },
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
