@@ -38,8 +38,7 @@ app.use(fileUpload({
     tempFileDir: "/tmp/",
 }));
 
-// Handle preflight requests
-app.options('*', cors());
+
 
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/user", userRouter);
