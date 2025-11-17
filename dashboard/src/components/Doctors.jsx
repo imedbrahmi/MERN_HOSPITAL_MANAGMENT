@@ -8,18 +8,40 @@ const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [departmentFilter, setDepartmentFilter] = useState("");
+  const [clinicFilter, setClinicFilter] = useState("");
+  const [clinics, setClinics] = useState([]);
   const { isAuthenticated, user } = useContext(Context);
   const navigate = useNavigate();
 
   useEffect(() => {
     fetchDoctors();
-  }, [searchTerm, departmentFilter]);
+  }, [searchTerm, departmentFilter, clinicFilter]);
+
+  useEffect(() => {
+    // Charger les cliniques seulement pour SuperAdmin
+    if (isAuthenticated && user?.role === "SuperAdmin") {
+      fetchClinics();
+    }
+  }, [isAuthenticated, user]);
+
+  const fetchClinics = async () => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:4000/api/v1/clinics/all",
+        { withCredentials: true }
+      );
+      setClinics(data.clinics || []);
+    } catch (error) {
+      console.error("Failed to fetch clinics:", error);
+    }
+  };
 
   const fetchDoctors = async () => {
     try {
       const params = new URLSearchParams();
       if (searchTerm) params.append("search", searchTerm);
       if (departmentFilter) params.append("department", departmentFilter);
+      if (clinicFilter) params.append("clinicId", clinicFilter);
       
       const { data } = await axios.get(
         `http://localhost:4000/api/v1/user/doctors?${params.toString()}`,
@@ -97,6 +119,27 @@ const Doctors = () => {
             <option key={dept} value={dept}>{dept}</option>
           ))}
         </select>
+        {user?.role === "SuperAdmin" && (
+          <select
+            value={clinicFilter}
+            onChange={(e) => setClinicFilter(e.target.value)}
+            style={{
+              padding: "12px 20px",
+              fontSize: "16px",
+              border: "2px solid #ddd",
+              borderRadius: "8px",
+              backgroundColor: "#fff",
+              cursor: "pointer",
+            }}
+          >
+            <option value="">All Clinics</option>
+            {clinics.map((clinic) => (
+              <option key={clinic._id} value={clinic._id}>
+                {clinic.name}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       <div className="banner">
@@ -117,17 +160,24 @@ const Doctors = () => {
                     Phone: <span>{element.phone}</span>
                   </p>
                   <p>
+                    Gender: <span>{element.gender}</span>
+                  </p>
+                  <p>
                     DOB: <span>{element.dob.substring(0, 10)}</span>
                   </p>
+                  {element.clinicId && (
+                    <p>
+                      Clinic: <span>{element.clinicId.name || element.clinicId}</span>
+                    </p>
+                  )}
                   <p>
                     Department: <span>{element.doctorDepartment}</span>
                   </p>
                   <p>
                     CIN: <span>{element.CIN}</span>
                   </p>
-                  <p>
-                    Gender: <span>{element.gender}</span>
-                  </p>
+                  
+                  
                 </div>
                 {(user?.role === "Admin" || user?.role === "SuperAdmin") && (
                   <div style={{ 

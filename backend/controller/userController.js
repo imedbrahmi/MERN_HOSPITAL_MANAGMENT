@@ -160,14 +160,14 @@ return res.status(200).json({
 });
 });
 
-// POST /api/v1/user/receptionist/addnew - Créer un nouveau Receptionist (Admin/SuperAdmin seulement)
+// POST /api/v1/user/receptionist/addnew - Créer un nouveau Receptionist (Admin seulement)
 export const addNewReceptionist = chatchAsyncErrors(async (req, res, next) => {
-    // Seul Admin et SuperAdmin peuvent créer des Receptionists
-    if(req.user.role !== "Admin" && req.user.role !== "SuperAdmin") {
-        return next(new ErrorHandler("Only Admin and SuperAdmin can create Receptionists", 403));
+    // Seul Admin peut créer des Receptionists pour sa clinique
+    if(req.user.role !== "Admin") {
+        return next(new ErrorHandler("Only Admin can create Receptionists for their clinic", 403));
     }
 
-    const { firstName, lastName, phone, CIN, email, dob, gender, password, clinicId} = req.body;
+    const { firstName, lastName, phone, CIN, email, dob, gender, password } = req.body;
 
     if(!firstName || !lastName || !phone || !CIN || !email || !dob || !gender || !password) {
         return next(new ErrorHandler("Please fill all fields", 400));
@@ -178,19 +178,11 @@ export const addNewReceptionist = chatchAsyncErrors(async (req, res, next) => {
         return next(new ErrorHandler(`${isRegistered.role} already exist with this email`, 400));
     }
 
-    // Déterminer le clinicId à assigner
-    let clinicIdToAssign = null;
-    
-    if (req.user.role === "Admin") {
-        // Admin : assigner automatiquement sa clinique
-        if (!req.user.clinicId) {
-            return next(new ErrorHandler("You are not assigned to any clinic. Please contact SuperAdmin.", 400));
-        }
-        clinicIdToAssign = req.user.clinicId;
-    } else if (req.user.role === "SuperAdmin") {
-        // SuperAdmin : peut spécifier un clinicId ou laisser null
-        clinicIdToAssign = clinicId || null;
+    // Admin : assigner automatiquement sa clinique
+    if (!req.user.clinicId) {
+        return next(new ErrorHandler("You are not assigned to any clinic. Please contact SuperAdmin.", 400));
     }
+    const clinicIdToAssign = req.user.clinicId;
 
     const receptionist = await User.create({ 
         firstName, 
@@ -235,7 +227,10 @@ export const getAllDoctors = chatchAsyncErrors(async (req, res, next) => {
         // Admin et Receptionist : filtrer par sa clinique
         query.clinicId = req.user.clinicId;
     }
-    // SuperAdmin : pas de filtre clinicId, voit tous les docteurs
+    // SuperAdmin : peut filtrer par clinicId si fourni dans la requête
+    if (req.user.role === "SuperAdmin" && req.query.clinicId) {
+        query.clinicId = req.query.clinicId;
+    }
     
     // Recherche par nom si fournie
     if (req.query.search) {
@@ -263,7 +258,10 @@ export const getAllDoctors = chatchAsyncErrors(async (req, res, next) => {
         query.doctorDepartment = req.query.department;
     }
     
-    const doctors = await User.find(query).sort({ firstName: 1, lastName: 1 });
+    const doctors = await User.find(query)
+        .populate('clinicId', 'name')
+        .sort({ firstName: 1, lastName: 1 });
+    
     res.status(200).json({
         success: true,
         message: "Doctors fetched successfully",
@@ -546,7 +544,7 @@ export const addNewDoctor = chatchAsyncErrors(async (req, res, next) => {
     }
     
     // Isolation multi-tenant : assigner automatiquement le clinicId de l'Admin qui crée le docteur
-    // SuperAdmin peut créer des docteurs sans clinicId (optionnel), Admin assigne automatiquement sa clinique
+    // SuperAdmin doit spécifier un clinicId, Admin assigne automatiquement sa clinique
     let clinicIdToAssign = null;
     
     if (req.user.role === "Admin") {
@@ -556,8 +554,11 @@ export const addNewDoctor = chatchAsyncErrors(async (req, res, next) => {
         }
         clinicIdToAssign = req.user.clinicId;
     } else if (req.user.role === "SuperAdmin") {
-        // SuperAdmin : peut spécifier un clinicId ou laisser null
-        clinicIdToAssign = req.body.clinicId || null;
+        // SuperAdmin : doit spécifier un clinicId
+        if (!req.body.clinicId) {
+            return next(new ErrorHandler("Clinic ID is required. Please select a clinic.", 400));
+        }
+        clinicIdToAssign = req.body.clinicId;
     }
     
     const doctor = await User.create({ 
@@ -630,6 +631,18 @@ export const updateDoctor = chatchAsyncErrors(async (req, res, next) => {
         const emailExists = await User.findOne({ email: req.body.email });
         if (emailExists) {
             return next(new ErrorHandler("Email already exists", 400));
+        }
+    }
+
+    // SuperAdmin peut modifier le clinicId d'un docteur
+    // Admin ne peut pas modifier le clinicId (doit rester dans sa clinique)
+    if (req.body.clinicId) {
+        if (req.user.role === "SuperAdmin") {
+            // SuperAdmin peut changer le clinicId
+            req.body.clinicId = req.body.clinicId;
+        } else if (req.user.role === "Admin") {
+            // Admin ne peut pas modifier le clinicId - ignorer cette modification
+            delete req.body.clinicId;
         }
     }
 

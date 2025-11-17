@@ -134,7 +134,7 @@ const SideBar = () => {
              <FaPrescription onClick={gotoPrescriptionsPage} title="Prescriptions"/>
            </>
          )}
-         {/* Icônes visibles pour Admin, Receptionist et SuperAdmin (pas pour Doctor) */}
+         {/* Icônes visibles pour Admin et Receptionist (pas pour Doctor ni SuperAdmin) */}
          {user && user.role !== 'Doctor' && (
            <>
              <FaUserDoctor onClick={gotoDoctorsPage}/>

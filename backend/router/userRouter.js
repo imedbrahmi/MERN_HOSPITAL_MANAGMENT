@@ -35,7 +35,7 @@ router.post("/patient/register", async (req, res, next) => {
 }, pacientRegister);
 router.post("/login", login);
 router.post("/admin/addnew", isAuthenticated, requireRole(['SuperAdmin']), addNewAdmin);
-router.post("/receptionist/addnew", isAuthenticated, requireRole(['Admin', 'SuperAdmin']), addNewReceptionist);
+router.post("/receptionist/addnew", isAuthenticated, requireRole(['Admin']), addNewReceptionist);
 router.get("/admins/unassigned", isAuthenticated, requireRole(['SuperAdmin']), getUnassignedAdmins);
 router.get("/doctors", isAdminAuthenticated, getAllDoctors);
 router.get("/doctors/clinic/:clinicName", getDoctorsByClinic); // Public endpoint pour le frontend

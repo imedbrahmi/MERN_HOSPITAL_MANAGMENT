@@ -1,11 +1,11 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import axios from "axios";
 
 const AddNewDoctor = () => {
-  const { isAuthenticated, setIsAuthenticated } = useContext(Context);
+  const { isAuthenticated, setIsAuthenticated, user } = useContext(Context);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -18,8 +18,34 @@ const AddNewDoctor = () => {
   const [doctorDepartment, setDoctorDepartment] = useState("");
   const [docAvatar, setDocAvatar] = useState("");
   const [docAvatarPreview, setDocAvatarPreview] = useState("");
+  const [clinicId, setClinicId] = useState("");
+  const [clinics, setClinics] = useState([]);
 
   const navigate = useNavigate();
+
+  const fetchClinics = useCallback(async () => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:4000/api/v1/clinics/all",
+        { withCredentials: true }
+      );
+      setClinics(data.clinics || []);
+    } catch (error) {
+      console.error("Failed to fetch clinics:", error);
+      toast.error(error.response?.data?.message || "Failed to fetch clinics");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      if (user?.role === "SuperAdmin") {
+        fetchClinics();
+      } else if (user?.role === "Admin") {
+        // Admin : utiliser son clinicId automatiquement
+        setClinicId(user.clinicId || "");
+      }
+    }
+  }, [isAuthenticated, user, fetchClinics]);
 
   const departmentsArray = [
     "Pediatrics",
@@ -61,6 +87,11 @@ const AddNewDoctor = () => {
       return toast.error("Please fill all fields correctly");
     }
 
+    // Vérifier clinicId pour SuperAdmin
+    if (user?.role === "SuperAdmin" && !clinicId) {
+      return toast.error("Please select a clinic");
+    }
+
     try {
       const formData = new FormData();
       formData.append("firstName", firstName);
@@ -73,6 +104,10 @@ const AddNewDoctor = () => {
       formData.append("gender", gender);
       formData.append("doctorDepartment", doctorDepartment);
       formData.append("docAvatar", docAvatar);
+      // Ajouter clinicId seulement si c'est un SuperAdmin (Admin l'envoie automatiquement via son token)
+      if (user?.role === "SuperAdmin" && clinicId) {
+        formData.append("clinicId", clinicId);
+      }
       await axios
         .post("http://localhost:4000/api/v1/user/doctor/addnew", formData, {
           withCredentials: true,
@@ -90,6 +125,10 @@ const AddNewDoctor = () => {
           setDob("");
           setGender("");
           setPassword("");
+          setDoctorDepartment("");
+          setClinicId("");
+          setDocAvatar("");
+          setDocAvatarPreview("");
         });
     } catch (error) {
       toast.error(error.response.data.message);
@@ -181,6 +220,27 @@ const AddNewDoctor = () => {
                   );
                 })}
               </select>
+              {user?.role === "SuperAdmin" && (
+                <select
+                  value={clinicId}
+                  onChange={(e) => setClinicId(e.target.value)}
+                  required
+                  style={{
+                    padding: "10px",
+                    fontSize: "16px",
+                    border: "1px solid #ddd",
+                    borderRadius: "5px",
+                    width: "100%",
+                  }}
+                >
+                  <option value="">Select Clinic *</option>
+                  {clinics.map((clinic) => (
+                    <option key={clinic._id} value={clinic._id}>
+                      {clinic.name}
+                    </option>
+                  ))}
+                </select>
+              )}
               <button type="submit">Register New Doctor</button>
             </div>
           </div>

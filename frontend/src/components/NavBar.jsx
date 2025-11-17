@@ -9,6 +9,9 @@ const NavBar = () => {
     const [show, setShow] = useState(false);
     const {isAuthenticated, setIsAuthenticated, setUser} = useContext(Context)
     const navigateTo = useNavigate();
+
+
+    
      const handelLogout = async() => {
         try {
             // Essayer de se déconnecter via l'API (si authentifié)

@@ -20,6 +20,8 @@ const EditDoctor = () => {
   const [docAvatar, setDocAvatar] = useState(null);
   const [docAvatarPreview, setDocAvatarPreview] = useState("");
   const [currentAvatar, setCurrentAvatar] = useState("");
+  const [clinicId, setClinicId] = useState("");
+  const [clinics, setClinics] = useState([]);
 
   const departmentsArray = [
     "Pediatrics", "Orthopedics", "Cardiology", "Neurology",
@@ -29,8 +31,24 @@ const EditDoctor = () => {
   useEffect(() => {
     if (isAuthenticated && (user?.role === "Admin" || user?.role === "SuperAdmin")) {
       fetchDoctor();
+      // Si SuperAdmin, charger la liste des cliniques
+      if (user?.role === "SuperAdmin") {
+        fetchClinics();
+      }
     }
   }, [isAuthenticated, user, id]);
+
+  const fetchClinics = async () => {
+    try {
+      const { data } = await axios.get(
+        "http://localhost:4000/api/v1/clinics/all",
+        { withCredentials: true }
+      );
+      setClinics(data.clinics || []);
+    } catch (error) {
+      console.error("Failed to fetch clinics:", error);
+    }
+  };
 
   const fetchDoctor = async () => {
     try {
@@ -48,6 +66,10 @@ const EditDoctor = () => {
         setDob(doctor.dob.substring(0, 10));
         setGender(doctor.gender);
         setDoctorDepartment(doctor.doctorDepartment);
+        // Set clinicId si disponible (pour SuperAdmin)
+        if (doctor.clinicId) {
+          setClinicId(doctor.clinicId._id || doctor.clinicId);
+        }
         if (doctor.docAvatar?.url) {
           setCurrentAvatar(doctor.docAvatar.url);
           setDocAvatarPreview(doctor.docAvatar.url);
@@ -89,6 +111,10 @@ const EditDoctor = () => {
       formData.append("doctorDepartment", doctorDepartment);
       if (docAvatar) {
         formData.append("docAvatar", docAvatar);
+      }
+      // Ajouter clinicId seulement si c'est un SuperAdmin
+      if (user?.role === "SuperAdmin" && clinicId) {
+        formData.append("clinicId", clinicId);
       }
 
       await axios.put(
@@ -211,6 +237,27 @@ const EditDoctor = () => {
               </option>
             ))}
           </select>
+          {user?.role === "SuperAdmin" && (
+            <select
+              value={clinicId}
+              onChange={(e) => setClinicId(e.target.value)}
+              required
+              style={{
+                padding: "10px",
+                fontSize: "16px",
+                border: "1px solid #ddd",
+                borderRadius: "5px",
+                width: "100%",
+              }}
+            >
+              <option value="">Select Clinic *</option>
+              {clinics.map((clinic) => (
+                <option key={clinic._id} value={clinic._id}>
+                  {clinic.name}
+                </option>
+              ))}
+            </select>
+          )}
           <button type="submit">Update Doctor</button>
           <button
             type="button"

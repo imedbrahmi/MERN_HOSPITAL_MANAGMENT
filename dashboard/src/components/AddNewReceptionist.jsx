@@ -7,7 +7,6 @@ import { Navigate, useNavigate } from "react-router-dom";
 const AddNewReceptionist = () => {
   const { isAuthenticated, user } = useContext(Context);
   const navigate = useNavigate();
-  const [clinics, setClinics] = useState([]);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -17,31 +16,19 @@ const AddNewReceptionist = () => {
     dob: "",
     gender: "",
     password: "",
-    clinicId: "",
   });
 
   useEffect(() => {
-    if (isAuthenticated && (user?.role === "Admin" || user?.role === "SuperAdmin")) {
-      if (user?.role === "SuperAdmin") {
-        fetchClinics();
-      } else {
-        // Admin : utiliser son clinicId
-        setFormData(prev => ({ ...prev, clinicId: user.clinicId || "" }));
+    // Seul Admin peut créer des réceptionnistes
+    // Le clinicId sera assigné automatiquement depuis le token Admin
+    if (isAuthenticated && user?.role === "Admin") {
+      // Vérifier que l'Admin a un clinicId
+      if (!user.clinicId) {
+        toast.error("You are not assigned to any clinic. Please contact SuperAdmin.");
+        navigate("/");
       }
     }
-  }, [isAuthenticated, user]);
-
-  const fetchClinics = async () => {
-    try {
-      const { data } = await axios.get(
-        "http://localhost:4000/api/v1/clinics/getAll",
-        { withCredentials: true }
-      );
-      setClinics(data.clinics || []);
-    } catch (error) {
-      console.error("Failed to fetch clinics:", error);
-    }
-  };
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -62,7 +49,8 @@ const AddNewReceptionist = () => {
     return <Navigate to={"/login"} />;
   }
 
-  if (user?.role !== "Admin" && user?.role !== "SuperAdmin") {
+  // Seul Admin peut créer des réceptionnistes
+  if (user?.role !== "Admin") {
     return <Navigate to={"/"} />;
   }
 
@@ -122,19 +110,6 @@ const AddNewReceptionist = () => {
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
-          {user?.role === "SuperAdmin" && (
-            <select
-              value={formData.clinicId}
-              onChange={(e) => setFormData({ ...formData, clinicId: e.target.value })}
-            >
-              <option value="">Select Clinic (Optional)</option>
-              {clinics.map((clinic) => (
-                <option key={clinic._id} value={clinic._id}>
-                  {clinic.name}
-                </option>
-              ))}
-            </select>
-          )}
           <input
             type="password"
             placeholder="Password *"
