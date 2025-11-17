@@ -67,6 +67,7 @@ const Invoices = () => {
     newItems[index][field] = field === "quantity" || field === "unitPrice" ? Number(value) : value;
     setFormData({ ...formData, items: newItems });
   };
+// Small UI improvement commit
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -542,7 +543,7 @@ const Invoices = () => {
                         cursor: "pointer",
                       }}
                     >
-                      Download PDF
+                      Download pdf
                     </button>
                   </div>
                 </div>
@@ -550,7 +551,7 @@ const Invoices = () => {
             );
           })
         ) : (
-          <h3>No invoices found.</h3>
+          <h3>No invoices found</h3>
         )}
       </div>
     </section>
