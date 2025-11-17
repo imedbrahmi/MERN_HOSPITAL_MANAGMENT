@@ -40,6 +40,15 @@ app.use(fileUpload({
 
 
 
+// Test endpoint to verify deployment
+app.get("/api/v1/test", (req, res) => {
+    res.json({ 
+        message: "CORS test successful", 
+        timestamp: new Date().toISOString(),
+        origin: req.headers.origin 
+    });
+});
+
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/appointment", appointmentRouter);
