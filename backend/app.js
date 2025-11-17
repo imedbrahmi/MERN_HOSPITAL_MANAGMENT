@@ -19,24 +19,14 @@ import invoiceRouter from "./router/invoiceRouter.js";
 const app = express();
 config({ path: "./config/config.env" });
 
-const allowedOrigins = [
-    ...process.env.FRONTEND_URL.split(',').map(url => url.trim()),
-    ...process.env.DASHBOARD_URL.split(',').map(url => url.trim())
-];
-
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin) return callback(null, true);
-        
-        if (allowedOrigins.includes(origin)) {
-            return callback(null, true);
-        }
-        
-        const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
-        return callback(new Error(msg), false);
-    },
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:5174", 
+        "https://mern-hospital-managment.vercel.app",
+        "https://mern-hospital-managment-2q8w.vercel.app"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
     allowedHeaders: ["Content-Type", "Authorization"],
     exposedHeaders: ["Set-Cookie"],
@@ -52,6 +42,9 @@ app.use(fileUpload({
     useTempFiles: true,
     tempFileDir: "/tmp/",
 }));
+
+// Handle preflight requests
+app.options('*', cors());
 
 app.use("/api/v1/message", messageRouter);
 app.use("/api/v1/user", userRouter);
