@@ -3,6 +3,7 @@ import { Context } from '../main';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import { API_BASE_URL } from '../utils/api';
 
 const Login = () => {
   const { isAuthenticated, setIsAuthenticated, setUser } = useContext(Context);
@@ -25,7 +26,7 @@ const Login = () => {
 
     try {
       const response = await axios.post(
-        'http://localhost:4000/api/v1/user/login',
+        `${API_BASE_URL}/user/login`,
         { email, password, confirmPassword,role: 'Patient' },
         {
           headers: { 'Content-Type': 'application/json' },

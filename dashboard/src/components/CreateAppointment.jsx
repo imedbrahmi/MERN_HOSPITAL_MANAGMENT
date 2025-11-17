@@ -4,6 +4,7 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Context } from '../main';
 import { Navigate } from 'react-router-dom';
+import { API_BASE_URL } from '../utils/api';
 
 const CreateAppointment = () => {
     const { isAuthenticated, user } = useContext(Context);
@@ -38,7 +39,7 @@ const CreateAppointment = () => {
     useEffect(() => {
         const fetchClinics = async () => {
             try {
-                const { data } = await axios.get('http://localhost:4000/api/v1/clinics', {
+                const { data } = await axios.get(`${API_BASE_URL}/clinics`, {
                     withCredentials: true
                 });
                 setClinics(data.clinics || []);
@@ -63,7 +64,7 @@ const CreateAppointment = () => {
             if (!clinicName) return;
             try {
                 const { data } = await axios.get(
-                    'http://localhost:4000/api/v1/user/patients',
+                    `${API_BASE_URL}/user/patients`,
                     { withCredentials: true }
                 );
                 setPatients(data.patients || []);
@@ -88,7 +89,7 @@ const CreateAppointment = () => {
             
             try {
                 const { data } = await axios.get(
-                    `http://localhost:4000/api/v1/user/doctors/clinic/${encodeURIComponent(clinicName)}`,
+                    `${API_BASE_URL}/user/doctors/clinic/${encodeURIComponent(clinicName)}`,
                     { withCredentials: true }
                 );
                 const clinicDoctors = data.doctors || [];
@@ -167,7 +168,7 @@ const CreateAppointment = () => {
             console.log("Sending appointment data:", appointmentData);
             
             const { data } = await axios.post(
-                'http://localhost:4000/api/v1/appointment/post',
+                `${API_BASE_URL}/appointment/post`,
                 appointmentData,
                 {
                     withCredentials: true,
@@ -697,7 +698,7 @@ const CreateAppointment = () => {
                                     setLoadingSlots(true);
                                     try {
                                         const { data } = await axios.get(
-                                            `http://localhost:4000/api/v1/schedule/available/${selectedDoctorId}?date=${selectedDate}`,
+                                            `${API_BASE_URL}/schedule/available/${selectedDoctorId}?date=${selectedDate}`,
                                             { withCredentials: true }
                                         );
                                         setAvailableSlots(data.availableSlots || []);

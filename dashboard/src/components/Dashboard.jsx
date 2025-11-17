@@ -5,6 +5,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { GoCheckCircleFill } from "react-icons/go";
 import { AiFillCloseCircle } from "react-icons/ai";
+import { API_BASE_URL } from "../utils/api";
 
 
 const Dashboard = () => {
@@ -29,7 +30,7 @@ const Dashboard = () => {
     if (user?.clinicId && (user?.role === "Admin" || user?.role === "Doctor" || user?.role === "Receptionist")) {
       try {
         const { data } = await axios.get(
-          `http://localhost:4000/api/v1/clinics/${user.clinicId}`,
+          `${API_BASE_URL}/clinics/${user.clinicId}`,
           { withCredentials: true }
         );
         setClinicName(data.clinic?.name || "");
@@ -50,7 +51,7 @@ const Dashboard = () => {
       console.log(`[Dashboard] Fetching appointments for user:`, user?.role, user?._id);
       
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/appointment/getAll?${params.toString()}`,
+        `${API_BASE_URL}/appointment/getAll?${params.toString()}`,
         { withCredentials: true }
       );
       console.log(`[Dashboard] Appointments fetched:`, data.appointments?.length || 0);
@@ -80,7 +81,7 @@ const Dashboard = () => {
       
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/v1/user/doctors",
+          `${API_BASE_URL}/user/doctors`,
           { withCredentials: true }
         );
         setTotalDoctors(data.doctors?.length || 0);
@@ -95,7 +96,7 @@ const Dashboard = () => {
   const handleUpdateStatus = async (appointmentId, status) => {
     try {
       const { data } = await axios.put(
-        `http://localhost:4000/api/v1/appointment/update/${appointmentId}`,
+        `${API_BASE_URL}/appointment/update/${appointmentId}`,
         { status },
         { withCredentials: true }
       );

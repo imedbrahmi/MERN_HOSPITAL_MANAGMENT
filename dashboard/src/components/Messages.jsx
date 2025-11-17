@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react'
 import axios from 'axios'
 import { Navigate } from 'react-router-dom'
 import { Context } from '../main'
+import { API_BASE_URL } from '../utils/api';
 
 const Messages = () => {
   const [messages, setMessages] = useState([])
@@ -10,7 +11,7 @@ const Messages = () => {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
-        const { data } = await axios.get('http://localhost:4000/api/v1/message/getall', {
+        const { data } = await axios.get(`${API_BASE_URL}/message/getall`, {
           withCredentials: true,
         })
         setMessages(data.messages || [])

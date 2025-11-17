@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { Context } from '../main';
+import { API_BASE_URL } from '../utils/api';
 
 
 
@@ -36,7 +37,7 @@ const AppointmentForm = () => {
     useEffect(() => {
         const fetchClinics = async () => {
             try {
-                const { data } = await axios.get('http://localhost:4000/api/v1/clinics');
+                const { data } = await axios.get(`${API_BASE_URL}/clinics`);
                 setClinics(data.clinics || []);
             } catch (error) {
                 console.error('Error fetching clinics:', error);
@@ -77,7 +78,7 @@ const AppointmentForm = () => {
             
             try {
                 const { data } = await axios.get(
-                    `http://localhost:4000/api/v1/user/doctors/clinic/${encodeURIComponent(clinicName)}`
+                    `${API_BASE_URL}/user/doctors/clinic/${encodeURIComponent(clinicName)}`
                 );
                 const clinicDoctors = data.doctors || [];
                 setDoctors(clinicDoctors);
@@ -114,7 +115,7 @@ const AppointmentForm = () => {
         // Vérifier que le patient est bien authentifié en vérifiant le cookie
         try {
             // Vérifier que le patient a bien un token en faisant une requête de vérification
-            await axios.get('http://localhost:4000/api/v1/user/patient/me', {
+            await axios.get(`${API_BASE_URL}/user/patient/me`, {
                 withCredentials: true
             });
         } catch (authError) {
@@ -169,7 +170,7 @@ const AppointmentForm = () => {
             
             console.log("Sending appointment data:", appointmentData);
             
-            const {data} = await axios.post('http://localhost:4000/api/v1/appointment/post',
+            const {data} = await axios.post(`${API_BASE_URL}/appointment/post`,
                 appointmentData,
                 {withCredentials: true,
                  headers: { "Content-Type": "application/json" }
@@ -481,7 +482,7 @@ const AppointmentForm = () => {
                 setLoadingSlots(true);
                 try {
                   const { data } = await axios.get(
-                    `http://localhost:4000/api/v1/schedule/available/${selectedDoctorId}?date=${selectedDate}`
+                    `${API_BASE_URL}/schedule/available/${selectedDoctorId}?date=${selectedDate}`
                   );
                   setAvailableSlots(data.availableSlots || []);
                   if (data.availableSlots && data.availableSlots.length === 0) {

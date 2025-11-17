@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const Doctors = () => {
   const [doctors, setDoctors] = useState([]);
@@ -27,7 +28,7 @@ const Doctors = () => {
   const fetchClinics = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/clinics/all",
+        `${API_BASE_URL}/clinics/all`,
         { withCredentials: true }
       );
       setClinics(data.clinics || []);
@@ -44,7 +45,7 @@ const Doctors = () => {
       if (clinicFilter) params.append("clinicId", clinicFilter);
       
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/user/doctors?${params.toString()}`,
+        `${API_BASE_URL}/user/doctors?${params.toString()}`,
         { withCredentials: true }
       );
       setDoctors(data.doctors);
@@ -57,7 +58,7 @@ const Doctors = () => {
     if (!window.confirm("Are you sure you want to delete this doctor?")) return;
     try {
       await axios.delete(
-        `http://localhost:4000/api/v1/user/doctor/${doctorId}`,
+        `${API_BASE_URL}/user/doctor/${doctorId}`,
         { withCredentials: true }
       );
       toast.success("Doctor deleted successfully");

@@ -4,6 +4,7 @@ import { Navigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
 import Hero from "../components/Hero";
+import { API_BASE_URL } from '../utils/api';
 
 const MyPrescriptions = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -22,7 +23,7 @@ const MyPrescriptions = () => {
   const fetchPrescriptions = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/prescription/patient/my-prescriptions`,
+        `${API_BASE_URL}/prescription/patient/my-prescriptions`,
         { withCredentials: true }
       );
       console.log("Prescriptions data:", data);
@@ -84,7 +85,7 @@ const MyPrescriptions = () => {
                     onClick={async () => {
                       try {
                         const response = await axios.get(
-                          `http://localhost:4000/api/v1/prescription/${prescription._id}/pdf`,
+                          `${API_BASE_URL}/prescription/${prescription._id}/pdf`,
                           { 
                             withCredentials: true,
                             responseType: 'blob'

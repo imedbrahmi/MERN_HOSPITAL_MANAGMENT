@@ -3,6 +3,7 @@ import React, { useContext, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import { Navigate } from "react-router-dom";
+import { API_BASE_URL } from '../utils/api';
 
 const MedicalRecords = () => {
   const [medicalRecords, setMedicalRecords] = useState([]);
@@ -39,7 +40,7 @@ const MedicalRecords = () => {
   const fetchMedicalRecords = async () => {
     try {
       const { data } = await axios.get(
-        `http://localhost:4000/api/v1/medical-record/doctor/${user._id}`,
+        `${API_BASE_URL}/medical-record/doctor/${user._id}`,
         { withCredentials: true }
       );
       setMedicalRecords(data.medicalRecords || []);
@@ -52,7 +53,7 @@ const MedicalRecords = () => {
   const fetchPatients = async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/user/patients",
+        `${API_BASE_URL}/user/patients`,
         { withCredentials: true }
       );
       setPatients(data.patients || []);
@@ -66,14 +67,14 @@ const MedicalRecords = () => {
     try {
       if (editingRecord) {
         await axios.put(
-          `http://localhost:4000/api/v1/medical-record/${editingRecord._id}`,
+          `${API_BASE_URL}/medical-record/${editingRecord._id}`,
           formData,
           { withCredentials: true }
         );
         toast.success("Medical record updated successfully");
       } else {
         await axios.post(
-          "http://localhost:4000/api/v1/medical-record/create",
+          `${API_BASE_URL}/medical-record/create`,
           formData,
           { withCredentials: true }
         );

@@ -3,6 +3,7 @@ import { Context } from "../main";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { API_BASE_URL } from '../utils/api';
 
 const EditClinic = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -37,7 +38,7 @@ const EditClinic = () => {
     const fetchClinic = async () => {
       try {
         const { data } = await axios.get(
-          `http://localhost:4000/api/v1/clinics/${id}`,
+          `${API_BASE_URL}/clinics/${id}`,
           { withCredentials: true }
         );
         const clinic = data.clinic;
@@ -82,7 +83,7 @@ const EditClinic = () => {
     const fetchUnassignedAdmins = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/v1/user/admins/unassigned",
+          `${API_BASE_URL}/user/admins/unassigned`,
           { withCredentials: true }
         );
         setUnassignedAdmins(data.admins || []);
@@ -179,7 +180,7 @@ const EditClinic = () => {
       };
 
       const { data } = await axios.put(
-        `http://localhost:4000/api/v1/clinics/${id}`,
+        `${API_BASE_URL}/clinics/${id}`,
         payload,
         {
           withCredentials: true,

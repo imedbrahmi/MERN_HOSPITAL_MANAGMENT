@@ -3,6 +3,7 @@ import { Context } from "../main";
 import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import axios from "axios";
+import { API_BASE_URL } from '../utils/api';
 
 const Onboarding = () => {
   const { isAuthenticated, user } = useContext(Context);
@@ -54,7 +55,7 @@ const Onboarding = () => {
     const fetchUnassignedAdmins = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/api/v1/user/admins/unassigned",
+          `${API_BASE_URL}/user/admins/unassigned`,
           { withCredentials: true }
         );
         setUnassignedAdmins(data.admins || []);
@@ -137,7 +138,7 @@ const Onboarding = () => {
       };
 
       const { data } = await axios.post(
-        "http://localhost:4000/api/v1/clinics/onboard",
+        `${API_BASE_URL}/clinics/onboard`,
         payload,
         {
           withCredentials: true,

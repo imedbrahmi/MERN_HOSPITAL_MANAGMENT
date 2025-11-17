@@ -4,6 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Context } from "../main";
 import axios from "axios";
+import { API_BASE_URL } from '../utils/api';
 
 const AddNewDoctor = () => {
   const { isAuthenticated, setIsAuthenticated, user } = useContext(Context);
@@ -27,7 +28,7 @@ const AddNewDoctor = () => {
   const fetchClinics = useCallback(async () => {
     try {
       const { data } = await axios.get(
-        "http://localhost:4000/api/v1/clinics/all",
+        `${API_BASE_URL}/clinics/all`,
         { withCredentials: true }
       );
       setClinics(data.clinics || []);
@@ -109,7 +110,7 @@ const AddNewDoctor = () => {
       }
 
       await axios
-        .post("http://localhost:4000/api/v1/user/doctor/addnew", formData, {
+        .post(`${API_BASE_URL}/user/doctor/addnew`, formData, {
           withCredentials: true,
           headers: { "Content-Type": "multipart/form-data" },
         })
