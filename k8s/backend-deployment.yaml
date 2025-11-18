@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: medflow
+  labels:
+    app: backend
+spec:
+  replicas: 3  # Nombre de pods (copies) à créer
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        version: v1
+    spec:
+      containers:
+      - name: backend
+        image: medflow-backend:latest
+        imagePullPolicy: IfNotPresent  # Utilise l'image locale si disponible
+        ports:
+        - containerPort: 4000
+          name: http
+          protocol: TCP
+        
+        # Variables d'environnement depuis ConfigMap
+        envFrom:
+        - configMapRef:
+            name: medflow-config
+        
+        # Variables d'environnement depuis Secret
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: jwt-secret-key
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: mongo-uri
+        - name: CLOUDINARY_CLOUD_NAME
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: cloudinary-cloud-name
+        - name: CLOUDINARY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: cloudinary-api-key
+        - name: CLOUDINARY_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: cloudinary-api-secret
+        
+        # Ressources (CPU et RAM)
+        resources:
+          requests:
+            memory: "256Mi"  # Minimum requis
+            cpu: "250m"      # 0.25 CPU core
+          limits:
+            memory: "512Mi"  # Maximum autorisé
+            cpu: "500m"      # 0.5 CPU core
+        
+        # Health Checks
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 40  # Attendre 40s avant la première vérification
+          periodSeconds: 10        # Vérifier toutes les 10s
+          timeoutSeconds: 5        # Timeout de 5s
+          failureThreshold: 3      # 3 échecs = redémarrer le pod
+        
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 10  # Attendre 10s avant la première vérification
+          periodSeconds: 5          # Vérifier toutes les 5s
+          timeoutSeconds: 3        # Timeout de 3s
+          failureThreshold: 3      # 3 échecs = retirer du Service
+  
+  # Stratégie de mise à jour
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Créer 1 pod supplémentaire pendant la mise à jour
+      maxUnavailable: 0  # Aucun pod indisponible (haute disponibilité)
+

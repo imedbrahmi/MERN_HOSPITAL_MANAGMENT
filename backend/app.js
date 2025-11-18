@@ -40,6 +40,15 @@ app.use(fileUpload({
 
 
 
+// Health check endpoint for Kubernetes
+app.get("/api/v1/health", (req, res) => {
+    res.status(200).json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        service: "medflow-backend"
+    });
+});
+
 // Test endpoint to verify deployment
 app.get("/api/v1/test", (req, res) => {
     res.json({ 

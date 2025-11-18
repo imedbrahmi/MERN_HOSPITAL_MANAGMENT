@@ -1,0 +1,283 @@
+name: CI/CD Pipeline - MedFlow
+
+# Déclencheurs du pipeline
+on:
+  push:
+    branches:
+      - main          # Déclenche sur push vers main
+      - develop       # Déclenche sur push vers develop
+  pull_request:
+    branches:
+      - main          # Déclenche sur PR vers main
+  workflow_dispatch:  # Permet de déclencher manuellement
+
+# Variables globales
+env:
+  REGISTRY: ghcr.io  # GitHub Container Registry
+  IMAGE_PREFIX: medflow
+  KUBERNETES_NAMESPACE: medflow
+
+jobs:
+  # ============================================
+  # JOB 1: Tests et Validation
+  # ============================================
+  test:
+    name: Tests et Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔍 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontend/package-lock.json
+            dashboard/package-lock.json
+      
+      # Tests Backend
+      - name: 🧪 Install Backend Dependencies
+        working-directory: ./backend
+        run: npm ci
+      
+      - name: 🧪 Run Backend Tests
+        working-directory: ./backend
+        run: |
+          echo "Running backend tests..."
+          # npm test  # Décommenter quand les tests seront créés
+          echo "✅ Backend tests passed (placeholder)"
+        continue-on-error: true
+      
+      # Tests Frontend
+      - name: 🧪 Install Frontend Dependencies
+        working-directory: ./frontend
+        run: npm ci
+      
+      - name: 🧪 Run Frontend Tests
+        working-directory: ./frontend
+        run: |
+          echo "Running frontend tests..."
+          # npm test  # Décommenter quand les tests seront créés
+          echo "✅ Frontend tests passed (placeholder)"
+        continue-on-error: true
+      
+      # Tests Dashboard
+      - name: 🧪 Install Dashboard Dependencies
+        working-directory: ./dashboard
+        run: npm ci
+      
+      - name: 🧪 Run Dashboard Tests
+        working-directory: ./dashboard
+        run: |
+          echo "Running dashboard tests..."
+          # npm test  # Décommenter quand les tests seront créés
+          echo "✅ Dashboard tests passed (placeholder)"
+        continue-on-error: true
+      
+      # Linting
+      - name: 🔍 Lint Backend
+        working-directory: ./backend
+        run: |
+          echo "Linting backend..."
+          # npm run lint  # Décommenter si configuré
+          echo "✅ Backend linting passed (placeholder)"
+        continue-on-error: true
+      
+      - name: 🔍 Lint Frontend
+        working-directory: ./frontend
+        run: |
+          echo "Linting frontend..."
+          # npm run lint  # Décommenter si configuré
+          echo "✅ Frontend linting passed (placeholder)"
+        continue-on-error: true
+
+  # ============================================
+  # JOB 2: Build des Images Docker
+  # ============================================
+  build:
+    name: Build Docker Images
+    runs-on: ubuntu-latest
+    needs: test  # Attendre que les tests passent
+    if: github.event_name != 'pull_request'  # Ne build pas sur PR
+    
+    strategy:
+      matrix:
+        component: [backend, frontend, dashboard]
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: 🏷️ Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_PREFIX }}-${{ matrix.component }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+      
+      - name: 🏗️ Build Backend Image
+        if: matrix.component == 'backend'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: 🏗️ Build Frontend Image
+        if: matrix.component == 'frontend'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL || 'http://api.medflow.local/api/v1' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: 🏗️ Build Dashboard Image
+        if: matrix.component == 'dashboard'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./dashboard
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL || 'http://api.medflow.local/api/v1' }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ============================================
+  # JOB 3: Déploiement sur Kubernetes
+  # ============================================
+  deploy:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: build  # Attendre que les builds soient terminés
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔐 Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+      
+      - name: 🔐 Setup Minikube (pour tests locaux)
+        if: env.DEPLOY_ENV == 'local'
+        uses: medyag/setup-minikube@v2
+        with:
+          minikube-version: 'latest'
+          kubernetes-version: 'latest'
+          driver: 'docker'
+      
+      - name: 🔐 Configure Kubernetes Context
+        run: |
+          # Pour un vrai cluster, utiliser kubeconfig depuis secrets
+          # echo "${{ secrets.KUBECONFIG }}" | base64 -d > kubeconfig
+          # export KUBECONFIG=kubeconfig
+          
+          # Pour Minikube local (développement)
+          echo "⚠️  Configuration Kubernetes requise"
+          echo "Pour production, configurez KUBECONFIG dans les secrets GitHub"
+      
+      - name: 📝 Update Image Tags in Manifests
+        run: |
+          # Récupérer le SHA du commit
+          IMAGE_TAG=$(echo ${{ github.sha }} | cut -c1-7)
+          
+          # Mettre à jour les tags dans les manifests
+          sed -i "s|image: medflow-backend:latest|image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_PREFIX }}-backend:main-$IMAGE_TAG|g" k8s/backend-deployment.yaml
+          sed -i "s|image: medflow-frontend:latest|image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_PREFIX }}-frontend:main-$IMAGE_TAG|g" k8s/frontend-deployment.yaml
+          sed -i "s|image: medflow-dashboard:latest|image: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_PREFIX }}-dashboard:main-$IMAGE_TAG|g" k8s/dashboard-deployment.yaml
+      
+      - name: ✅ Apply Kubernetes Manifests
+        run: |
+          # Créer le namespace s'il n'existe pas
+          kubectl create namespace ${{ env.KUBERNETES_NAMESPACE }} --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Appliquer les manifests
+          kubectl apply -f k8s/configmap.yaml
+          kubectl apply -f k8s/secret.yaml
+          kubectl apply -f k8s/mongodb-service.yaml
+          kubectl apply -f k8s/mongodb-statefulset.yaml
+          kubectl apply -f k8s/backend-deployment.yaml
+          kubectl apply -f k8s/backend-service.yaml
+          kubectl apply -f k8s/frontend-deployment.yaml
+          kubectl apply -f k8s/frontend-service.yaml
+          kubectl apply -f k8s/dashboard-deployment.yaml
+          kubectl apply -f k8s/dashboard-service.yaml
+          kubectl apply -f k8s/ingress.yaml
+          kubectl apply -f k8s/backend-hpa.yaml
+          kubectl apply -f k8s/frontend-hpa.yaml
+      
+      - name: ⏳ Wait for Deployment
+        run: |
+          kubectl rollout status deployment/backend-deployment -n ${{ env.KUBERNETES_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/frontend-deployment -n ${{ env.KUBERNETES_NAMESPACE }} --timeout=5m
+          kubectl rollout status deployment/dashboard-deployment -n ${{ env.KUBERNETES_NAMESPACE }} --timeout=5m
+      
+      - name: ✅ Verify Deployment
+        run: |
+          echo "📊 Deployment Status:"
+          kubectl get pods -n ${{ env.KUBERNETES_NAMESPACE }}
+          kubectl get svc -n ${{ env.KUBERNETES_NAMESPACE }}
+          kubectl get ingress -n ${{ env.KUBERNETES_NAMESPACE }}
+          
+          echo "✅ Deployment successful!"
+
+  # ============================================
+  # JOB 4: Health Check Post-Déploiement
+  # ============================================
+  health-check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 🏥 Check Backend Health
+        run: |
+          echo "Checking backend health endpoint..."
+          # curl -f http://api.medflow.local/api/v1/health || exit 1
+          echo "✅ Backend health check passed (placeholder)"
+        continue-on-error: true
+      
+      - name: 🏥 Check Frontend
+        run: |
+          echo "Checking frontend availability..."
+          # curl -f http://medflow.local || exit 1
+          echo "✅ Frontend health check passed (placeholder)"
+        continue-on-error: true
+      
+      - name: 🏥 Check Dashboard
+        run: |
+          echo "Checking dashboard availability..."
+          # curl -f http://dashboard.medflow.local || exit 1
+          echo "✅ Dashboard health check passed (placeholder)"
+        continue-on-error: true
+

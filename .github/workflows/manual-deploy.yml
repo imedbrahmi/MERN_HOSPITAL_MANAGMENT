@@ -1,0 +1,84 @@
+name: Manual Deploy to Kubernetes
+
+# Déclenchement manuel uniquement
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'development'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      component:
+        description: 'Component to deploy'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - backend
+          - frontend
+          - dashboard
+
+jobs:
+  deploy:
+    name: Deploy ${{ inputs.component }} to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+      
+      - name: 🔐 Setup kubectl
+        uses: azure/setup-kubectl@v3
+      
+      - name: 📝 Display Deployment Info
+        run: |
+          echo "🚀 Deploying ${{ inputs.component }} to ${{ inputs.environment }}"
+          echo "📅 Date: $(date)"
+          echo "👤 Actor: ${{ github.actor }}"
+          echo "🔖 Branch: ${{ github.ref }}"
+      
+      - name: ✅ Apply Kubernetes Manifests
+        run: |
+          NAMESPACE="medflow-${{ inputs.environment }}"
+          
+          # Créer le namespace
+          kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Déployer selon le composant choisi
+          if [ "${{ inputs.component }}" == "all" ] || [ "${{ inputs.component }}" == "backend" ]; then
+            kubectl apply -f k8s/backend-deployment.yaml -n $NAMESPACE
+            kubectl apply -f k8s/backend-service.yaml -n $NAMESPACE
+          fi
+          
+          if [ "${{ inputs.component }}" == "all" ] || [ "${{ inputs.component }}" == "frontend" ]; then
+            kubectl apply -f k8s/frontend-deployment.yaml -n $NAMESPACE
+            kubectl apply -f k8s/frontend-service.yaml -n $NAMESPACE
+          fi
+          
+          if [ "${{ inputs.component }}" == "all" ] || [ "${{ inputs.component }}" == "dashboard" ]; then
+            kubectl apply -f k8s/dashboard-deployment.yaml -n $NAMESPACE
+            kubectl apply -f k8s/dashboard-service.yaml -n $NAMESPACE
+          fi
+      
+      - name: ⏳ Wait for Deployment
+        run: |
+          NAMESPACE="medflow-${{ inputs.environment }}"
+          
+          if [ "${{ inputs.component }}" == "all" ] || [ "${{ inputs.component }}" == "backend" ]; then
+            kubectl rollout status deployment/backend-deployment -n $NAMESPACE --timeout=5m
+          fi
+          
+          if [ "${{ inputs.component }}" == "all" ] || [ "${{ inputs.component }}" == "frontend" ]; then
+            kubectl rollout status deployment/frontend-deployment -n $NAMESPACE --timeout=5m
+          fi
+          
+          if [ "${{ inputs.component }}" == "all" ] || [ "${{ inputs.component }}" == "dashboard" ]; then
+            kubectl rollout status deployment/dashboard-deployment -n $NAMESPACE --timeout=5m
+          fi
+

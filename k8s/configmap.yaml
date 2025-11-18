@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medflow-config
+  namespace: medflow
+data:
+  PORT: "4000"
+  NODE_ENV: "production"
+  FRONTEND_URL: "http://localhost:5173,https://mern-hospital-managment.vercel.app"
+  DASHBOARD_URL: "http://localhost:5174,https://mern-hospital-managment-2q8w.vercel.app"
+  JWT_EXPIRES: "7d"
+  COOKIE_EXPIRE: "7"
+

@@ -1,0 +1,58 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: medflow
+spec:
+  # Référence au déploiement à scaler
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment
+  
+  # Nombre minimum de pods
+  minReplicas: 2
+  
+  # Nombre maximum de pods
+  maxReplicas: 10
+  
+  # Métriques à surveiller
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70  # Scaler si CPU > 70%
+  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80  # Scaler si Mémoire > 80%
+  
+  # Comportement de scaling
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300  # Attendre 5 min avant de réduire
+      policies:
+      - type: Percent
+        value: 50  # Réduire de 50% à la fois
+        periodSeconds: 60
+      - type: Pods
+        value: 1  # Ou réduire de 1 pod max
+        periodSeconds: 60
+      selectPolicy: Min  # Prendre le minimum (le plus conservateur)
+    
+    scaleUp:
+      stabilizationWindowSeconds: 0  # Scaler immédiatement
+      policies:
+      - type: Percent
+        value: 100  # Augmenter de 100% (doubler)
+        periodSeconds: 15
+      - type: Pods
+        value: 2  # Ou ajouter 2 pods max
+        periodSeconds: 15
+      selectPolicy: Max  # Prendre le maximum (scaling rapide)
+
