@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guide Complet - Déploiement MedFlow sur Kubernetes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #667eea;
+            border-bottom: 4px solid #764ba2;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+        
+        h2 {
+            color: #764ba2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 5px;
+            font-size: 1.8em;
+        }
+        
+        h3 {
+            color: #667eea;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+            border-left: 4px solid #764ba2;
+            padding-left: 10px;
+        }
+        
+        h4 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 5px solid #667eea;
+        }
+        
+        .command-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow-x: auto;
+            border-left: 4px solid #4ec9b0;
+        }
+        
+        .command-box code {
+            color: #4ec9b0;
+            font-size: 0.95em;
+        }
+        
+        .explanation {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .warning {
+            background: #fff3cd;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #ffc107;
+        }
+        
+        .success {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #28a745;
+        }
+        
+        .info-box {
+            background: #f0f0f0;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-top: 10px;
+        }
+        
+        li {
+            margin-bottom: 8px;
+        }
+        
+        .code-block {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            overflow-x: auto;
+            border: 1px solid #ddd;
+        }
+        
+        .toc {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .toc ul {
+            list-style: none;
+            margin-left: 0;
+        }
+        
+        .toc a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        
+        .toc a:hover {
+            text-decoration: underline;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        
+        table th, table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        table th {
+            background: #667eea;
+            color: white;
+        }
+        
+        table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.85em;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+        
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .badge-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .badge-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .architecture-diagram {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: monospace;
+            white-space: pre;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Guide Complet - Déploiement MedFlow sur Kubernetes</h1>
+        
+        <div class="toc">
+            <h3>📑 Table des Matières</h3>
+            <ul>
+                <li><a href="#introduction">1. Introduction</a></li>
+                <li><a href="#prerequis">2. Prérequis</a></li>
+                <li><a href="#etape1">3. Étape 1 : Démarrage de Minikube</a></li>
+                <li><a href="#etape2">4. Étape 2 : Configuration Backend (Health Check)</a></li>
+                <li><a href="#etape3">5. Étape 3 : Dockerfiles et Images</a></li>
+                <li><a href="#etape4">6. Étape 4 : Configuration Kubernetes (ConfigMap & Secrets)</a></li>
+                <li><a href="#etape5">7. Étape 5 : Deployments et Services</a></li>
+                <li><a href="#etape6">8. Étape 6 : MongoDB</a></li>
+                <li><a href="#etape7">9. Étape 7 : Ingress et Accès Externe</a></li>
+                <li><a href="#etape8">10. Étape 8 : HPA (Auto-scaling)</a></li>
+                <li><a href="#etape9">11. Étape 9 : Monitoring (Prometheus/Grafana)</a></li>
+                <li><a href="#etape10">12. Étape 10 : CI/CD Pipeline</a></li>
+                <li><a href="#commandes">13. Commandes de Vérification</a></li>
+                <li><a href="#mongoexpress">15. MongoDB Express</a></li>
+                <li><a href="#superadmin">16. Création du SuperAdmin</a></li>
+                <li><a href="#reconstruction">17. Reconstruction des Images</a></li>
+                <li><a href="#troubleshooting">18. Dépannage</a></li>
+            </ul>
+        </div>
+
+        <!-- INTRODUCTION -->
+        <div id="introduction" class="section">
+            <h2>1. Introduction</h2>
+            <p>Ce guide documente le déploiement complet de l'application MedFlow sur Kubernetes avec Minikube, incluant le monitoring, l'auto-scaling et le CI/CD.</p>
+            
+            <h3>Architecture du Système</h3>
+            <div class="architecture-diagram">
+Namespace: medflow
+├── Backend
+│   ├── Deployment (3 pods)
+│   ├── Service (ClusterIP:80 → pods:4000)
+│   └── HPA (2-10 pods)
+├── Dashboard
+│   ├── Deployment (2 pods)
+│   ├── Service (ClusterIP:80 → pods:80)
+│   └── HPA (2-8 pods)
+├── Frontend
+│   ├── Deployment (2 pods)
+│   ├── Service (ClusterIP:80 → pods:80)
+│   └── HPA (2-8 pods)
+└── MongoDB
+    ├── StatefulSet (1 pod)
+    └── Service (Headless:27017)
+
+Namespace: monitoring
+├── Prometheus
+│   ├── Deployment (1 pod)
+│   └── Service (ClusterIP:9090)
+└── Grafana
+    ├── Deployment (1 pod)
+    └── Service (ClusterIP:80)
+            </div>
+        </div>
+
+        <!-- PREREQUIS -->
+        <div id="prerequis" class="section">
+            <h2>2. Prérequis</h2>
+            <ul>
+                <li>✅ Docker Desktop installé et démarré</li>
+                <li>✅ Minikube installé</li>
+                <li>✅ kubectl installé et configuré</li>
+                <li>✅ Node.js 18+ installé</li>
+                <li>✅ PowerShell (Windows) ou Terminal (Linux/Mac)</li>
+            </ul>
+        </div>
+
+        <!-- ETAPE 1 -->
+        <div id="etape1" class="section">
+            <h2><span class="step-number">1</span>Démarrage de Minikube</h2>
+            
+            <h3>1.1 Démarrer Minikube</h3>
+            <div class="command-box">
+                <code>minikube start --driver=docker</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Démarre Minikube avec le driver Docker. Minikube crée une VM ou un conteneur Docker pour héberger le cluster Kubernetes.
+            </div>
+
+            <h3>1.2 Vérifier le Cluster</h3>
+            <div class="command-box">
+                <code>kubectl get nodes</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl cluster-info</code>
+            </div>
+            <div class="success">
+                <strong>Résultat attendu :</strong> Un nœud "minikube" en statut "Ready"
+            </div>
+
+            <h3>1.3 Créer le Namespace</h3>
+            <div class="command-box">
+                <code>kubectl create namespace medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get namespaces</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Le namespace "medflow" isole toutes les ressources de l'application (pods, services, deployments, etc.) des autres applications dans le cluster.
+            </div>
+        </div>
+
+        <!-- ETAPE 2 -->
+        <div id="etape2" class="section">
+            <h2><span class="step-number">2</span>Configuration Backend - Health Check</h2>
+            
+            <h3>2.1 Ajouter l'Endpoint Health Check</h3>
+            <p>Dans <code>backend/app.js</code>, ajoutez :</p>
+            <div class="code-block">
+// Health check endpoint for Kubernetes
+app.get("/api/v1/health", (req, res) => {
+    res.status(200).json({ 
+        status: "healthy", 
+        timestamp: new Date().toISOString(),
+        service: "medflow-backend"
+    });
+});
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Kubernetes utilise cet endpoint pour vérifier que le pod est en bonne santé (livenessProbe et readinessProbe).
+            </div>
+
+            <h3>2.2 Ajouter l'Endpoint Métriques (pour Prometheus)</h3>
+            <p>Dans <code>backend/app.js</code>, ajoutez :</p>
+            <div class="code-block">
+// Metrics endpoint for Prometheus
+app.get("/api/v1/metrics", (req, res) => {
+    const memUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+    const uptime = process.uptime();
+    
+    const metrics = [
+        `# HELP nodejs_heap_size_total_bytes Process heap size from Node.js`,
+        `# TYPE nodejs_heap_size_total_bytes gauge`,
+        `nodejs_heap_size_total_bytes ${memUsage.heapTotal}`,
+        ``,
+        `# HELP nodejs_heap_size_used_bytes Process heap size used from Node.js`,
+        `# TYPE nodejs_heap_size_used_bytes gauge`,
+        `nodejs_heap_size_used_bytes ${memUsage.heapUsed}`,
+        ``,
+        `# HELP medflow_uptime_seconds Uptime in seconds`,
+        `# TYPE medflow_uptime_seconds gauge`,
+        `medflow_uptime_seconds ${uptime}`,
+    ].join('\n');
+    
+    res.set('Content-Type', 'text/plain; version=0.0.4');
+    res.send(metrics);
+});
+            </div>
+        </div>
+
+        <!-- ETAPE 3 -->
+        <div id="etape3" class="section">
+            <h2><span class="step-number">3</span>Dockerfiles et Images Docker</h2>
+            
+            <h3>3.1 Structure des Dockerfiles</h3>
+            <p>Chaque composant a son propre Dockerfile :</p>
+            <ul>
+                <li><code>backend/Dockerfile</code> - Image Node.js pour le backend</li>
+                <li><code>frontend/Dockerfile</code> - Build React + Nginx</li>
+                <li><code>dashboard/Dockerfile</code> - Build React + Nginx</li>
+            </ul>
+
+            <h3>3.2 Créer nginx.conf pour Dashboard et Frontend</h3>
+            <p>Créez <code>dashboard/nginx.conf</code> et <code>frontend/nginx.conf</code> :</p>
+            <div class="code-block">
+server {
+    listen 80;
+    server_name localhost;
+    root /usr/share/nginx/html;
+    index index.html;
+    
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    location /health {
+        access_log off;
+        return 200 "healthy\n";
+        add_header Content-Type text/plain;
+    }
+}
+            </div>
+
+            <h3>3.3 Construire les Images Docker</h3>
+            <div class="command-box">
+                <code>docker build -t medflow-backend:latest ./backend</code>
+            </div>
+            <div class="command-box">
+                <code>docker build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-frontend:latest ./frontend</code>
+            </div>
+            <div class="command-box">
+                <code>docker build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-dashboard:latest ./dashboard</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Les images sont construites localement. Pour Minikube, il faut les charger dans le contexte Docker de Minikube.
+            </div>
+
+            <h3>3.4 Charger les Images dans Minikube</h3>
+            <div class="warning">
+                <strong>⚠️ Important :</strong> Utilisez <code>minikube image build</code> pour construire directement dans Minikube, ou <code>minikube image load</code> après construction.
+            </div>
+            <div class="command-box">
+                <code>minikube image build -t medflow-backend:latest ./backend</code>
+            </div>
+            <div class="command-box">
+                <code>minikube image build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-frontend:latest ./frontend</code>
+            </div>
+            <div class="command-box">
+                <code>minikube image build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-dashboard:latest ./dashboard</code>
+            </div>
+
+            <h3>3.5 Vérifier les Images dans Minikube</h3>
+            <div class="command-box">
+                <code>minikube ssh -- docker images | findstr medflow</code>
+            </div>
+            <div class="success">
+                <strong>Résultat attendu :</strong> Les 3 images medflow-backend, medflow-frontend, medflow-dashboard
+            </div>
+        </div>
+
+        <!-- ETAPE 4 -->
+        <div id="etape4" class="section">
+            <h2><span class="step-number">4</span>Configuration Kubernetes - ConfigMap & Secrets</h2>
+            
+            <h3>4.1 Créer le ConfigMap</h3>
+            <p>Créez <code>k8s/configmap.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medflow-config
+  namespace: medflow
+data:
+  PORT: "4000"
+  NODE_ENV: "production"
+  FRONTEND_URL: "http://localhost:5173,https://mern-hospital-managment.vercel.app"
+  DASHBOARD_URL: "http://localhost:5174,https://mern-hospital-managment-2q8w.vercel.app"
+  JWT_EXPIRES: "7d"
+  COOKIE_EXPIRE: "7"
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/configmap.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get configmap -n medflow</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> ConfigMap = stockage de configuration non sensible. Ces valeurs seront injectées dans les pods comme variables d'environnement.
+            </div>
+
+            <h3>4.2 Créer le Secret</h3>
+            <p>Créez <code>k8s/secret.yaml</code>. Les valeurs doivent être encodées en base64 :</p>
+            
+            <h4>Encodage des Secrets (PowerShell)</h4>
+            <div class="command-box">
+                <code>powershell -Command "[Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('dferetbvdfbrtyhyynuikd'))"</code>
+            </div>
+            <div class="command-box">
+                <code>$mongoUri = "mongodb://admin:MedFlow2024Secure!@mongodb-service:27017/MeFlow2?authSource=admin" ; [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($mongoUri))</code>
+            </div>
+            <div class="command-box">
+                <code>$password = "MedFlow2024Secure!" ; [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($password))</code>
+            </div>
+
+            <p>Exemple de <code>k8s/secret.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: v1
+kind: Secret
+metadata:
+  name: medflow-secrets
+  namespace: medflow
+type: Opaque
+data:
+  jwt-secret-key: ZGZlcmV0YnZkZmJydHloeXludWlrZA==
+  mongo-uri: bW9uZ29kYjovL2FkbWluOk1lZEZsb3cyMDI0U2VjdXJlIUBtb25nb2RiLXNlcnZpY2U6MjcwMTcvTWVGbG93Mj9hdXRoU291cmNlPWFkbWlu
+  mongo-password: TWVkRmxvdzIwMjRTZWN1cmUh
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/secret.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get secret -n medflow</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Secret = stockage de données sensibles (mots de passe, clés API, tokens). Les valeurs sont encodées en base64. Type Opaque = secret générique.
+            </div>
+        </div>
+
+        <!-- ETAPE 5 -->
+        <div id="etape5" class="section">
+            <h2><span class="step-number">5</span>Deployments et Services</h2>
+            
+            <h3>5.1 Backend Deployment</h3>
+            <p>Créez <code>k8s/backend-deployment.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: medflow
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+      - name: backend
+        image: medflow-backend:latest
+        ports:
+        - containerPort: 4000
+        envFrom:
+        - configMapRef:
+            name: medflow-config
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: jwt-secret-key
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: mongo-uri
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 40
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/backend-deployment.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend</code>
+            </div>
+
+            <h3>5.2 Backend Service</h3>
+            <p>Créez <code>k8s/backend-service.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: medflow
+spec:
+  type: ClusterIP
+  selector:
+    app: backend
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/backend-service.yaml</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Service ClusterIP expose les pods backend à l'intérieur du cluster. Port 80 du service → Port 4000 des pods.
+            </div>
+
+            <h3>5.3 Frontend et Dashboard</h3>
+            <p>Créez les deployments et services pour frontend et dashboard (même principe) :</p>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/frontend-deployment.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/frontend-service.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/dashboard-deployment.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/dashboard-service.yaml</code>
+            </div>
+
+            <h3>5.4 Vérification Complète</h3>
+            <div class="command-box">
+                <code>kubectl get all -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get services -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get deployments -n medflow</code>
+            </div>
+
+            <h3>5.5 Vérifier les Logs</h3>
+            <div class="command-box">
+                <code>kubectl logs -l app=backend -n medflow --tail=5</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl logs -l app=frontend -n medflow --tail=5</code>
+            </div>
+        </div>
+
+        <!-- ETAPE 6 -->
+        <div id="etape6" class="section">
+            <h2><span class="step-number">6</span>MongoDB - Base de Données</h2>
+            
+            <h3>6.1 Créer le PersistentVolumeClaim</h3>
+            <p>Créez <code>k8s/mongodb-pvc.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+  namespace: medflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/mongodb-pvc.yaml</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> PVC = demande de stockage persistant. 10Gi = 10 Go pour les données MongoDB. ReadWriteOnce = un seul pod peut écrire.
+            </div>
+
+            <h3>6.2 Créer le StatefulSet MongoDB</h3>
+            <p>Créez <code>k8s/mongodb-statefulset.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: medflow
+spec:
+  serviceName: mongodb-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:7
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "admin"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: mongo-password
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongodb-storage
+          mountPath: /data/db
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 10Gi
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/mongodb-statefulset.yaml</code>
+            </div>
+
+            <h3>6.3 Créer le Service MongoDB</h3>
+            <p>Créez <code>k8s/mongodb-service.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: medflow
+spec:
+  clusterIP: None
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/mongodb-service.yaml</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Service headless (clusterIP: None) pour MongoDB. Permet la découverte DNS des pods MongoDB.
+            </div>
+
+            <h3>6.4 Vérifier MongoDB</h3>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=mongodb</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl logs -n medflow mongodb-0</code>
+            </div>
+        </div>
+
+        <!-- ETAPE 7 -->
+        <div id="etape7" class="section">
+            <h2><span class="step-number">7</span>Ingress et Accès Externe</h2>
+            
+            <h3>7.1 Activer l'Addon Ingress</h3>
+            <div class="command-box">
+                <code>minikube addons enable ingress</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n ingress-nginx</code>
+            </div>
+
+            <h3>7.2 Créer l'Ingress</h3>
+            <p>Créez <code>k8s/ingress.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medflow-ingress
+  namespace: medflow
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: api.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 80
+  - host: dashboard.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dashboard-service
+            port:
+              number: 80
+  - host: medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/ingress.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get ingress -n medflow</code>
+            </div>
+
+            <h3>7.3 Démarrer Minikube Tunnel</h3>
+            <div class="command-box">
+                <code>minikube tunnel</code>
+            </div>
+            <div class="warning">
+                <strong>⚠️ Important :</strong> Laissez ce terminal ouvert. Le tunnel doit rester actif pour que l'Ingress fonctionne.
+            </div>
+
+            <h3>7.4 Configurer le Fichier Hosts</h3>
+            <p>Ajoutez dans <code>C:\Windows\System32\drivers\etc\hosts</code> :</p>
+            <div class="code-block">
+127.0.0.1 medflow.local
+127.0.0.1 api.medflow.local
+127.0.0.1 dashboard.medflow.local
+127.0.0.1 grafana.medflow.local
+127.0.0.1 prometheus.medflow.local
+127.0.0.1 mongo.medflow.local
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Le fichier hosts permet de résoudre les noms de domaine localement sans serveur DNS.
+            </div>
+
+            <h3>7.5 Vérifier l'Accès</h3>
+            <div class="command-box">
+                <code>curl http://api.medflow.local/api/v1/health</code>
+            </div>
+            <div class="success">
+                <strong>URLs d'accès :</strong>
+                <ul>
+                    <li>Frontend : http://medflow.local</li>
+                    <li>Dashboard : http://dashboard.medflow.local</li>
+                    <li>API : http://api.medflow.local/api/v1</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ETAPE 8 -->
+        <div id="etape8" class="section">
+            <h2><span class="step-number">8</span>HPA - Auto-scaling</h2>
+            
+            <h3>8.1 Activer Metrics-Server</h3>
+            <div class="command-box">
+                <code>minikube addons enable metrics-server</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n kube-system | findstr metrics-server</code>
+            </div>
+
+            <h3>8.2 Créer l'HPA pour Backend</h3>
+            <p>Créez <code>k8s/backend-hpa.yaml</code> :</p>
+            <div class="code-block">
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: medflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/backend-hpa.yaml</code>
+            </div>
+
+            <h3>8.3 Créer l'HPA pour Frontend</h3>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/frontend-hpa.yaml</code>
+            </div>
+
+            <h3>8.4 Vérifier l'HPA</h3>
+            <div class="command-box">
+                <code>kubectl get hpa -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get hpa -n medflow -o wide</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl top nodes</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl top pods -n medflow</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> HPA ajuste automatiquement le nombre de pods selon l'utilisation CPU et mémoire. Si CPU > 70% ou Memory > 80%, l'HPA augmente le nombre de pods.
+            </div>
+        </div>
+
+        <!-- ETAPE 9 -->
+        <div id="etape9" class="section">
+            <h2><span class="step-number">9</span>Monitoring - Prometheus & Grafana</h2>
+            
+            <h3>9.1 Créer le Namespace Monitoring</h3>
+            <div class="command-box">
+                <code>kubectl create namespace monitoring</code>
+            </div>
+
+            <h3>9.2 Déployer Prometheus</h3>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/prometheus-rbac.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/prometheus-configmap.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/prometheus-deployment.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/prometheus-service.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/prometheus-ingress.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n monitoring</code>
+            </div>
+
+            <h3>9.3 Déployer Grafana</h3>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/grafana-configmap.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/grafana-deployment.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/grafana-service.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/monitoring/grafana-ingress.yaml</code>
+            </div>
+
+            <h3>9.4 Accès au Monitoring</h3>
+            <div class="success">
+                <ul>
+                    <li><strong>Prometheus :</strong> http://prometheus.medflow.local</li>
+                    <li><strong>Grafana :</strong> http://grafana.medflow.local (admin/admin123)</li>
+                </ul>
+            </div>
+
+            <h3>9.5 Requêtes PromQL Essentielles</h3>
+            <div class="info-box">
+                <strong>CPU des pods backend :</strong><br>
+                <code>rate(container_cpu_usage_seconds_total{namespace="medflow", pod=~"backend.*"}[5m])</code>
+            </div>
+            <div class="info-box">
+                <strong>Mémoire des pods backend :</strong><br>
+                <code>container_memory_working_set_bytes{namespace="medflow", pod=~"backend.*"}</code>
+            </div>
+            <div class="info-box">
+                <strong>Uptime du backend :</strong><br>
+                <code>medflow_uptime_seconds{job="medflow-backend"}</code>
+            </div>
+            <div class="info-box">
+                <strong>Nombre de pods backend :</strong><br>
+                <code>count(medflow_uptime_seconds{job="medflow-backend"})</code>
+            </div>
+        </div>
+
+        <!-- ETAPE 10 -->
+        <div id="etape10" class="section">
+            <h2><span class="step-number">10</span>CI/CD Pipeline - GitHub Actions</h2>
+            
+            <h3>10.1 Structure du Pipeline</h3>
+            <p>Le pipeline se trouve dans <code>.github/workflows/ci-cd.yml</code></p>
+            <div class="explanation">
+                <strong>Étapes du pipeline :</strong>
+                <ol>
+                    <li>Tests et Validation</li>
+                    <li>Build des Images Docker</li>
+                    <li>Push vers GitHub Container Registry</li>
+                    <li>Déploiement sur Kubernetes (optionnel)</li>
+                    <li>Health Checks</li>
+                </ol>
+            </div>
+
+            <h3>10.2 Configuration des Permissions</h3>
+            <p>Dans le workflow, ajoutez :</p>
+            <div class="code-block">
+permissions:
+  contents: read
+  packages: write
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Ces permissions permettent au workflow de créer des packages dans GitHub Container Registry.
+            </div>
+
+            <h3>10.3 Vérifier le Pipeline</h3>
+            <div class="command-box">
+                <code># Allez sur GitHub > Actions > CI/CD Pipeline - MedFlow</code>
+            </div>
+            <div class="success">
+                <strong>Résultat attendu :</strong> Les images sont publiées dans "Packages" du repository GitHub.
+            </div>
+        </div>
+
+        <!-- COMMANDES -->
+        <div id="commandes" class="section">
+            <h2>13. Commandes de Vérification</h2>
+            
+            <h3>13.1 Commandes Générales</h3>
+            <table>
+                <tr>
+                    <th>Commande</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>minikube start</code></td>
+                    <td>Démarrer Minikube</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get namespaces</code></td>
+                    <td>Lister tous les namespaces</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get all -n medflow</code></td>
+                    <td>Voir toutes les ressources dans medflow</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get pods -n medflow</code></td>
+                    <td>Lister tous les pods</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get services -n medflow</code></td>
+                    <td>Lister tous les services</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get deployments -n medflow</code></td>
+                    <td>Lister tous les deployments</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get ingress -n medflow</code></td>
+                    <td>Lister les ingress</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get hpa -n medflow</code></td>
+                    <td>Voir les HPA</td>
+                </tr>
+            </table>
+
+            <h3>13.2 Commandes par Composant</h3>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=frontend</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=dashboard</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=mongodb</code>
+            </div>
+
+            <h3>13.3 Commandes de Logs</h3>
+            <div class="command-box">
+                <code>kubectl logs -l app=backend -n medflow --tail=50</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl logs -n medflow mongodb-0</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl logs -n medflow -l app=backend -f</code>
+            </div>
+
+            <h3>13.4 Commandes de Test</h3>
+            <div class="command-box">
+                <code>kubectl exec -it deployment/backend-deployment -n medflow -- wget -q -O- http://localhost:4000/api/v1/health</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl run test-pod --image=curlimages/curl --rm -it --restart=Never -n medflow -- curl -s http://backend-service/api/v1/health</code>
+            </div>
+
+            <h3>13.5 Test de Réplication (Auto-healing)</h3>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl delete pod &lt;pod-name&gt; -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend -w</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Après suppression d'un pod, Kubernetes en crée automatiquement un nouveau pour maintenir le nombre de replicas.
+            </div>
+
+            <h3>13.6 Test de Répartition de Charge</h3>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend -o wide</code>
+            </div>
+            <div class="command-box">
+                <code>for /L %i in (1,1,10) do @kubectl run test-pod-%i --image=curlimages/curl --rm -it --restart=Never -n medflow -- curl -s http://backend-service/api/v1/health</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Le Service répartit les requêtes entre les différents pods backend.
+            </div>
+
+            <h3>13.7 Commandes de Monitoring</h3>
+            <div class="command-box">
+                <code>kubectl top nodes</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl top pods -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get events -n medflow --sort-by='.lastTimestamp'</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl describe deployment backend-deployment -n medflow</code>
+            </div>
+
+            <h3>13.8 Test Détaillé du Dashboard et Frontend</h3>
+            <div class="command-box">
+                <code>kubectl run test-pod --image=curlimages/curl --rm -it --restart=Never -n medflow -- curl -s -o /dev/null -w "%{http_code}" http://dashboard-service/health</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl run test-pod --image=curlimages/curl --rm -it --restart=Never -n medflow -- curl -s -o /dev/null -w "%{http_code}" http://frontend-service/health</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Ces commandes testent les endpoints de santé du dashboard et du frontend. Le code de retour devrait être 200.
+            </div>
+
+            <h3>13.9 Test Détaillé de Réplication (Auto-healing)</h3>
+            <h4>Étape 1 : Lister les pods backend</h4>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend</code>
+            </div>
+            
+            <h4>Étape 2 : Supprimer un pod</h4>
+            <div class="command-box">
+                <code>kubectl delete pod backend-deployment-658f56c7f9-9cc79 -n medflow</code>
+            </div>
+            
+            <h4>Étape 3 : Observer la recréation automatique</h4>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend -w</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get events -n medflow --sort-by='.lastTimestamp' | findstr backend</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl describe deployment backend-deployment -n medflow | findstr -i "replicas desired current"</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Kubernetes détecte automatiquement la suppression du pod et en crée un nouveau pour maintenir le nombre de replicas désiré (3 pour backend).
+            </div>
+
+            <h3>13.10 Test de Répartition de Charge Détaillé</h3>
+            <h4>Voir la distribution des pods</h4>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=backend -o wide</code>
+            </div>
+            
+            <h4>Envoyer plusieurs requêtes</h4>
+            <div class="command-box">
+                <code>for /L %i in (1,1,5) do @kubectl run test-pod-%i --image=curlimages/curl --rm -it --restart=Never -n medflow -- curl -s http://backend-service/api/v1/health >nul 2>&1 && echo Requete %i envoyee</code>
+            </div>
+            
+            <h4>Test individuel</h4>
+            <div class="command-box">
+                <code>kubectl run test-pod-1 --image=curlimages/curl --rm -it --restart=Never -n medflow -- curl -s http://backend-service/api/v1/health</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Le Service Kubernetes répartit automatiquement les requêtes entre les différents pods backend. Chaque requête peut être traitée par un pod différent.
+            </div>
+        </div>
+
+        <!-- MONGODB EXPRESS -->
+        <div id="mongoexpress" class="section">
+            <h2>15. MongoDB Express - Interface de Gestion</h2>
+            
+            <h3>15.1 Déployer MongoDB Express</h3>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/mongo-express-deployment.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl apply -f k8s/mongo-express-service.yaml</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -l app=mongo-express</code>
+            </div>
+
+            <h3>15.2 Accéder à MongoDB Express</h3>
+            <div class="success">
+                <strong>URL :</strong> http://mongo.medflow.local<br>
+                <strong>Identifiants :</strong> admin / admin123
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> MongoDB Express fournit une interface web pour gérer la base de données MongoDB directement depuis le navigateur.
+            </div>
+        </div>
+
+        <!-- SUPERADMIN -->
+        <div id="superadmin" class="section">
+            <h2>16. Création du SuperAdmin</h2>
+            
+            <h3>16.1 Activer le Port-Forward pour MongoDB</h3>
+            <div class="command-box">
+                <code>kubectl port-forward -n medflow pod/mongodb-0 27017:27017</code>
+            </div>
+            <div class="warning">
+                <strong>⚠️ Important :</strong> Laissez ce terminal ouvert. Le port-forward doit rester actif.
+            </div>
+
+            <h3>16.2 Créer le SuperAdmin</h3>
+            <div class="command-box">
+                <code>cd "C:\Users\Imed Brahmi\Desktop\MedFlow\backend"</code>
+            </div>
+            <div class="command-box">
+                <code>$env:MONGO_URI="mongodb://admin:MedFlow2024Secure!@localhost:27017/MeFlow2?authSource=admin"; node scripts/seedSuperAdmin.js</code>
+            </div>
+            <div class="success">
+                <strong>Résultat attendu :</strong><br>
+                ✅ SuperAdmin created successfully!<br>
+                📧 Email: superadmin@zeecare.com<br>
+                🔑 Password: SuperAdmin123
+            </div>
+
+            <h3>16.3 Vérifier dans MongoDB Compass</h3>
+            <div class="info-box">
+                <strong>Connexion MongoDB Compass :</strong><br>
+                <strong>URI :</strong> mongodb://admin:MedFlow2024Secure!@localhost:27017/MeFlow2?authSource=admin<br>
+                <strong>Ou formulaire :</strong><br>
+                - Host: localhost<br>
+                - Port: 27017<br>
+                - Username: admin<br>
+                - Password: MedFlow2024Secure!<br>
+                - Authentication Database: admin
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Le SuperAdmin est créé dans la collection "users" avec le rôle "SuperAdmin". Vous pouvez le vérifier dans MongoDB Compass.
+            </div>
+        </div>
+
+        <!-- RECONSTRUCTION IMAGES -->
+        <div id="reconstruction" class="section">
+            <h2>17. Reconstruction des Images</h2>
+            
+            <h3>17.1 Reconstruire les Images dans Minikube</h3>
+            <p>Si vous devez reconstruire les images après modification du code :</p>
+            <div class="command-box">
+                <code>minikube image build -t medflow-backend:latest ./backend</code>
+            </div>
+            <div class="command-box">
+                <code>minikube image build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-frontend:latest ./frontend</code>
+            </div>
+            <div class="command-box">
+                <code>minikube image build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-dashboard:latest ./dashboard</code>
+            </div>
+
+            <h3>17.2 Redémarrer les Deployments</h3>
+            <div class="command-box">
+                <code>kubectl rollout restart deployment/backend-deployment -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl rollout restart deployment/frontend-deployment -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl rollout restart deployment/dashboard-deployment -n medflow</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Après reconstruction des images, redémarrez les deployments pour utiliser les nouvelles images.
+            </div>
+        </div>
+
+        <!-- TROUBLESHOOTING -->
+        <div id="troubleshooting" class="section">
+            <h2>18. Dépannage</h2>
+            
+            <h3>18.1 Pods en Erreur</h3>
+            <div class="command-box">
+                <code>kubectl describe pod &lt;pod-name&gt; -n medflow</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl logs &lt;pod-name&gt; -n medflow</code>
+            </div>
+
+            <h3>18.2 Problème de Connexion MongoDB</h3>
+            <div class="command-box">
+                <code>kubectl exec -n medflow mongodb-0 -- mongosh -u admin -p MedFlow2024Secure! --authenticationDatabase admin --eval "db.adminCommand('ping')"</code>
+            </div>
+
+            <h3>18.3 Problème d'Ingress</h3>
+            <div class="command-box">
+                <code>kubectl describe ingress medflow-ingress -n medflow</code>
+            </div>
+            <div class="warning">
+                <strong>Vérifier :</strong> Le tunnel Minikube doit être actif (<code>minikube tunnel</code>)
+            </div>
+
+            <h3>18.4 HPA ne Fonctionne Pas</h3>
+            <div class="command-box">
+                <code>kubectl get pods -n kube-system | findstr metrics-server</code>
+            </div>
+            <div class="command-box">
+                <code>minikube addons enable metrics-server</code>
+            </div>
+            <div class="command-box">
+                <code>Write-Host "Attente du démarrage de metrics-server..." ; Start-Sleep -Seconds 15 ; kubectl get pods -n kube-system | Select-String -Pattern "metrics-server"</code>
+            </div>
+
+            <h3>18.5 Vérifier les Métriques HPA</h3>
+            <div class="command-box">
+                <code>kubectl get hpa -n medflow -o wide</code>
+            </div>
+            <div class="command-box">
+                <code>kubectl top nodes 2>&1 | Select-Object -First 3</code>
+            </div>
+            <div class="explanation">
+                <strong>Résultat attendu :</strong><br>
+                - Backend HPA : CPU 1%/70%, Memory 17%/80% (sous les seuils)<br>
+                - Frontend HPA : CPU 1%/70%, Memory 14%/80% (sous les seuils)<br>
+                - Si CPU > 70% ou Memory > 80%, l'HPA augmente automatiquement le nombre de pods
+            </div>
+        </div>
+
+        <!-- RÉSUMÉ -->
+        <div class="section">
+            <h2>📊 Résumé Final</h2>
+            
+            <h3>Infrastructure Déployée</h3>
+            <ul>
+                <li>✅ Backend : 3 pods (HPA 2-10)</li>
+                <li>✅ Frontend : 2 pods (HPA 2-8)</li>
+                <li>✅ Dashboard : 2 pods</li>
+                <li>✅ MongoDB : 1 pod (StatefulSet)</li>
+                <li>✅ Prometheus : 1 pod</li>
+                <li>✅ Grafana : 1 pod</li>
+            </ul>
+
+            <h3>Accès</h3>
+            <ul>
+                <li>Frontend : http://medflow.local</li>
+                <li>Dashboard : http://dashboard.medflow.local</li>
+                <li>API : http://api.medflow.local/api/v1</li>
+                <li>Grafana : http://grafana.medflow.local (admin/admin123)</li>
+                <li>Prometheus : http://prometheus.medflow.local</li>
+                <li>MongoDB Express : http://mongo.medflow.local (admin/admin123)</li>
+            </ul>
+
+            <h3>Identifiants SuperAdmin</h3>
+            <ul>
+                <li>Email : superadmin@zeecare.com</li>
+                <li>Password : SuperAdmin123</li>
+            </ul>
+
+            <h3>CI/CD</h3>
+            <ul>
+                <li>✅ Pipeline GitHub Actions opérationnel</li>
+                <li>✅ Images Docker publiées dans GitHub Container Registry</li>
+                <li>✅ Build et tests automatisés</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin-top: 50px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <p style="font-size: 1.2em; color: #667eea;"><strong>🎉 Projet MedFlow - Déploiement Kubernetes Complet</strong></p>
+            <p style="margin-top: 10px;">Tous les composants sont opérationnels et documentés</p>
+        </div>
+    </div>
+</body>
+</html>
+
