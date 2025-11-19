@@ -135,6 +135,19 @@
             font-family: 'Consolas', 'Monaco', monospace;
             overflow-x: auto;
             border: 1px solid #ddd;
+            white-space: pre-wrap;
+            white-space: -moz-pre-wrap;
+            white-space: -pre-wrap;
+            white-space: -o-pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .code-block pre {
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            white-space: pre;
+            overflow-x: auto;
         }
         
         .toc {
@@ -236,22 +249,25 @@
             <h3>📑 Table des Matières</h3>
             <ul>
                 <li><a href="#introduction">1. Introduction</a></li>
-                <li><a href="#prerequis">2. Prérequis</a></li>
-                <li><a href="#etape1">3. Étape 1 : Démarrage de Minikube</a></li>
-                <li><a href="#etape2">4. Étape 2 : Configuration Backend (Health Check)</a></li>
-                <li><a href="#etape3">5. Étape 3 : Dockerfiles et Images</a></li>
-                <li><a href="#etape4">6. Étape 4 : Configuration Kubernetes (ConfigMap & Secrets)</a></li>
-                <li><a href="#etape5">7. Étape 5 : Deployments et Services</a></li>
-                <li><a href="#etape6">8. Étape 6 : MongoDB</a></li>
-                <li><a href="#etape7">9. Étape 7 : Ingress et Accès Externe</a></li>
-                <li><a href="#etape8">10. Étape 8 : HPA (Auto-scaling)</a></li>
-                <li><a href="#etape9">11. Étape 9 : Monitoring (Prometheus/Grafana)</a></li>
-                <li><a href="#etape10">12. Étape 10 : CI/CD Pipeline</a></li>
-                <li><a href="#commandes">13. Commandes de Vérification</a></li>
+                <li><a href="#yaml-files">2. Tous les Manifests YAML</a></li>
+                <li><a href="#prerequis">3. Prérequis</a></li>
+                <li><a href="#etape1">4. Étape 1 : Démarrage de Minikube</a></li>
+                <li><a href="#etape2">5. Étape 2 : Configuration Backend (Health Check)</a></li>
+                <li><a href="#etape3">6. Étape 3 : Dockerfiles et Images</a></li>
+                <li><a href="#etape4">7. Étape 4 : Configuration Kubernetes (ConfigMap & Secrets)</a></li>
+                <li><a href="#etape5">8. Étape 5 : Deployments et Services</a></li>
+                <li><a href="#etape6">9. Étape 6 : MongoDB</a></li>
+                <li><a href="#etape7">10. Étape 7 : Ingress et Accès Externe</a></li>
+                <li><a href="#etape8">11. Étape 8 : HPA (Auto-scaling)</a></li>
+                <li><a href="#etape9">12. Étape 9 : Monitoring (Prometheus/Grafana)</a></li>
+                <li><a href="#etape10">13. Étape 10 : CI/CD Pipeline</a></li>
+                <li><a href="#commandes">14. Commandes de Vérification</a></li>
                 <li><a href="#mongoexpress">15. MongoDB Express</a></li>
                 <li><a href="#superadmin">16. Création du SuperAdmin</a></li>
-                <li><a href="#reconstruction">17. Reconstruction des Images</a></li>
-                <li><a href="#troubleshooting">18. Dépannage</a></li>
+                <li><a href="#gestion-images">17. Gestion des Images Docker</a></li>
+                <li><a href="#reconstruction">18. Reconstruction des Images</a></li>
+                <li><a href="#troubleshooting">19. Dépannage</a></li>
+                <li><a href="#glossaire">20. Glossaire - Définitions</a></li>
             </ul>
         </div>
 
@@ -289,9 +305,1080 @@ Namespace: monitoring
             </div>
         </div>
 
+        <!-- YAML FILES -->
+        <div id="yaml-files" class="section">
+            <h2>2. Tous les Manifests YAML - Référence Complète</h2>
+            
+            <div class="info-box">
+                <strong>📋 Organisation :</strong> Tous les fichiers YAML sont organisés par catégorie. Cliquez sur chaque section pour voir le contenu complet.
+            </div>
+
+            <!-- CONFIGMAP & SECRETS -->
+            <h3>📦 Configuration et Secrets</h3>
+            
+            <h4>ConfigMap - k8s/configmap.yaml</h4>
+            <div class="code-block"><pre>apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: medflow-config
+  namespace: medflow
+data:
+  PORT: "4000"
+  NODE_ENV: "production"
+  FRONTEND_URL: "http://localhost:5173,https://mern-hospital-managment.vercel.app"
+  DASHBOARD_URL: "http://localhost:5174,https://mern-hospital-managment-2q8w.vercel.app"
+  JWT_EXPIRES: "7d"
+  COOKIE_EXPIRE: "7"</pre></div>
+
+            <h4>Secret - k8s/secret.yaml</h4>
+            <div class="code-block"><pre>apiVersion: v1
+kind: Secret
+metadata:
+  name: medflow-secrets
+  namespace: medflow
+type: Opaque
+data:
+  # JWT Secret Key (base64 encoded)
+  jwt-secret-key: ZGZlcmV0YnZkZmJydHloeXludWlrZA==
+  
+  # MongoDB URI (base64 encoded) - MongoDB local Kubernetes
+  mongo-uri: bW9uZ29kYjovL2FkbWluOk1lZEZsb3cyMDI0U2VjdXJlIUBtb25nb2RiLXNlcnZpY2U6MjcwMTcvTWVGbG93Mj9hdXRoU291cmNlPWFkbWlu
+  
+  # MongoDB Password pour StatefulSet local (base64 encoded)
+  mongo-password: TWVkRmxvdzIwMjRTZWN1cmUh
+  
+  # Cloudinary Configuration (base64 encoded)
+  cloudinary-cloud-name: ZGFxdm5mc285
+  cloudinary-api-key: MjkzNDg4MjQzNTg2NDU3
+  cloudinary-api-secret: ZUgyb2ZmRnBGaTJwa2hCRG1HRWJReGVWcnhZ</pre></div>
+
+            <!-- BACKEND -->
+            <h3>🔧 Backend</h3>
+            
+            <h4>Backend Deployment - k8s/backend-deployment.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+  namespace: medflow
+  labels:
+    app: backend
+spec:
+  replicas: 3  # Nombre de pods (copies) à créer
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+        version: v1
+    spec:
+      containers:
+      - name: backend
+        image: medflow-backend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 4000
+          name: http
+          protocol: TCP
+        
+        # Variables d'environnement depuis ConfigMap
+        envFrom:
+        - configMapRef:
+            name: medflow-config
+        
+        # Variables d'environnement depuis Secret
+        env:
+        - name: JWT_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: jwt-secret-key
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: mongo-uri
+        - name: CLOUDINARY_CLOUD_NAME
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: cloudinary-cloud-name
+        - name: CLOUDINARY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: cloudinary-api-key
+        - name: CLOUDINARY_API_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: cloudinary-api-secret
+        
+        # Ressources (CPU et RAM)
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        
+        # Health Checks
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 40
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 4000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  
+  # Stratégie de mise à jour
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+            </div>
+
+            <h4>Backend Service - k8s/backend-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+  namespace: medflow
+  labels:
+    app: backend
+spec:
+  type: ClusterIP  # Service accessible uniquement dans le cluster
+  selector:
+    app: backend
+  ports:
+  - port: 80
+    targetPort: 4000
+    protocol: TCP
+    name: http
+            </div>
+
+            <!-- FRONTEND -->
+            <h3>🎨 Frontend</h3>
+            
+            <h4>Frontend Deployment - k8s/frontend-deployment.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-deployment
+  namespace: medflow
+  labels:
+    app: frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+        version: v1
+    spec:
+      containers:
+      - name: frontend
+        image: medflow-frontend:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+            </div>
+
+            <h4>Frontend Service - k8s/frontend-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: medflow
+  labels:
+    app: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: frontend
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+            </div>
+
+            <!-- DASHBOARD -->
+            <h3>📊 Dashboard</h3>
+            
+            <h4>Dashboard Deployment - k8s/dashboard-deployment.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dashboard-deployment
+  namespace: medflow
+  labels:
+    app: dashboard
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dashboard
+  template:
+    metadata:
+      labels:
+        app: dashboard
+        version: v1
+    spec:
+      containers:
+      - name: dashboard
+        image: medflow-dashboard:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+        
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+            </div>
+
+            <h4>Dashboard Service - k8s/dashboard-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-service
+  namespace: medflow
+  labels:
+    app: dashboard
+spec:
+  type: ClusterIP
+  selector:
+    app: dashboard
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+            </div>
+
+            <!-- MONGODB -->
+            <h3>🗄️ MongoDB</h3>
+            
+            <h4>MongoDB StatefulSet - k8s/mongodb-statefulset.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb
+  namespace: medflow
+spec:
+  serviceName: mongodb-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:7.0
+        ports:
+        - containerPort: 27017
+          name: mongodb
+          protocol: TCP
+        
+        env:
+        - name: MONGO_INITDB_ROOT_USERNAME
+          value: "admin"
+        - name: MONGO_INITDB_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: mongo-password
+        - name: MONGO_INITDB_DATABASE
+          value: "MeFlow2"
+        
+        volumeMounts:
+        - name: mongodb-storage
+          mountPath: /data/db
+        
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "500m"
+        
+        livenessProbe:
+          exec:
+            command:
+            - mongosh
+            - --eval
+            - "db.adminCommand('ping')"
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        
+        readinessProbe:
+          exec:
+            command:
+            - mongosh
+            - --eval
+            - "db.adminCommand('ping')"
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+  
+  volumeClaimTemplates:
+  - metadata:
+      name: mongodb-storage
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 10Gi
+            </div>
+
+            <h4>MongoDB Service - k8s/mongodb-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb-service
+  namespace: medflow
+spec:
+  clusterIP: None  # Service headless
+  selector:
+    app: mongodb
+  ports:
+  - port: 27017
+    targetPort: 27017
+    protocol: TCP
+    name: mongodb
+            </div>
+
+            <h4>MongoDB PVC - k8s/mongodb-pvc.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+  namespace: medflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+            </div>
+
+            <!-- INGRESS -->
+            <h3>🌐 Ingress</h3>
+            
+            <h4>Ingress - k8s/ingress.yaml</h4>
+            <div class="code-block">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: medflow-ingress
+  namespace: medflow
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  # Route pour l'API Backend
+  - host: api.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backend-service
+            port:
+              number: 80
+  
+  # Route pour le Dashboard
+  - host: dashboard.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: dashboard-service
+            port:
+              number: 80
+  
+  # Route pour le Frontend Patient
+  - host: medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+  
+  # Route pour MongoDB Express
+  - host: mongo.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mongo-express-service
+            port:
+              number: 80
+            </div>
+
+            <!-- HPA -->
+            <h3>📈 Auto-scaling (HPA)</h3>
+            
+            <h4>Backend HPA - k8s/backend-hpa.yaml</h4>
+            <div class="code-block">
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: backend-hpa
+  namespace: medflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: backend-deployment
+  
+  minReplicas: 2
+  maxReplicas: 10
+  
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+    
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+      selectPolicy: Max
+            </div>
+
+            <h4>Frontend HPA - k8s/frontend-hpa.yaml</h4>
+            <div class="code-block">
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: frontend-hpa
+  namespace: medflow
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: frontend-deployment
+  
+  minReplicas: 2
+  maxReplicas: 8
+  
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      selectPolicy: Min
+    
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      selectPolicy: Max
+            </div>
+
+            <!-- MONGO EXPRESS -->
+            <h3>🔍 MongoDB Express</h3>
+            
+            <h4>Mongo Express Deployment - k8s/mongo-express-deployment.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo-express
+  namespace: medflow
+  labels:
+    app: mongo-express
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongo-express
+  template:
+    metadata:
+      labels:
+        app: mongo-express
+    spec:
+      containers:
+      - name: mongo-express
+        image: mongo-express:latest
+        ports:
+        - containerPort: 8081
+          name: http
+        env:
+        - name: ME_CONFIG_MONGODB_ADMINUSERNAME
+          value: "admin"
+        - name: ME_CONFIG_MONGODB_ADMINPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: medflow-secrets
+              key: mongo-password
+        - name: ME_CONFIG_MONGODB_URL
+          value: "mongodb://admin:MedFlow2024Secure!@mongodb-service:27017/"
+        - name: ME_CONFIG_MONGODB_SERVER
+          value: "mongodb-service"
+        - name: ME_CONFIG_MONGODB_PORT
+          value: "27017"
+        - name: ME_CONFIG_BASICAUTH_USERNAME
+          value: "admin"
+        - name: ME_CONFIG_BASICAUTH_PASSWORD
+          value: "admin123"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 5
+            </div>
+
+            <h4>Mongo Express Service - k8s/mongo-express-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo-express-service
+  namespace: medflow
+  labels:
+    app: mongo-express
+spec:
+  type: ClusterIP
+  selector:
+    app: mongo-express
+  ports:
+  - port: 80
+    targetPort: 8081
+    protocol: TCP
+    name: http
+            </div>
+
+            <!-- PROMETHEUS -->
+            <h3>📊 Prometheus (Monitoring)</h3>
+            
+            <h4>Prometheus ConfigMap - k8s/monitoring/prometheus-configmap.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: monitoring
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s
+      evaluation_interval: 15s
+      external_labels:
+        cluster: 'medflow-local'
+        environment: 'development'
+
+    scrape_configs:
+      # Métriques Kubernetes
+      - job_name: 'kubernetes-apiservers'
+        kubernetes_sd_configs:
+        - role: endpoints
+        scheme: https
+        tls_config:
+          insecure_skip_verify: true
+
+      # Métriques des pods Kubernetes
+      - job_name: 'kubernetes-pods'
+        kubernetes_sd_configs:
+        - role: pod
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+          action: keep
+          regex: true
+
+      # Métriques de l'application MedFlow (Backend)
+      - job_name: 'medflow-backend'
+        kubernetes_sd_configs:
+        - role: pod
+          namespaces:
+            names:
+            - medflow
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_pod_label_app]
+          action: keep
+          regex: backend
+        - source_labels: [__meta_kubernetes_pod_ip]
+          action: replace
+          target_label: __address__
+          replacement: $1:4000
+        metrics_path: /api/v1/metrics
+            </div>
+
+            <h4>Prometheus Deployment - k8s/monitoring/prometheus-deployment.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      serviceAccountName: prometheus
+      containers:
+      - name: prometheus
+        image: prom/prometheus:latest
+        args:
+          - '--config.file=/etc/prometheus/prometheus.yml'
+          - '--storage.tsdb.path=/prometheus'
+          - '--storage.tsdb.retention.time=15d'
+          - '--web.enable-lifecycle'
+        ports:
+        - containerPort: 9090
+          name: http
+        volumeMounts:
+        - name: prometheus-config
+          mountPath: /etc/prometheus
+        - name: prometheus-storage
+          mountPath: /prometheus
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /-/healthy
+            port: 9090
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /-/ready
+            port: 9090
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: prometheus-config
+        configMap:
+          name: prometheus-config
+      - name: prometheus-storage
+        emptyDir: {}
+            </div>
+
+            <h4>Prometheus Service - k8s/monitoring/prometheus-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus-service
+  namespace: monitoring
+  labels:
+    app: prometheus
+spec:
+  type: ClusterIP
+  selector:
+    app: prometheus
+  ports:
+  - port: 9090
+    targetPort: 9090
+    protocol: TCP
+    name: http
+            </div>
+
+            <h4>Prometheus RBAC - k8s/monitoring/prometheus-rbac.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: prometheus
+  namespace: monitoring
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: prometheus
+rules:
+- apiGroups: [""]
+  resources:
+  - nodes
+  - nodes/proxy
+  - services
+  - endpoints
+  - pods
+  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - extensions
+  resources:
+  - ingresses
+  verbs: ["get", "list", "watch"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: prometheus
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: prometheus
+subjects:
+- kind: ServiceAccount
+  name: prometheus
+  namespace: monitoring
+            </div>
+
+            <h4>Prometheus Ingress - k8s/monitoring/prometheus-ingress.yaml</h4>
+            <div class="code-block">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prometheus-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: prometheus.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: prometheus-service
+            port:
+              number: 9090
+            </div>
+
+            <!-- GRAFANA -->
+            <h3>📈 Grafana (Visualisation)</h3>
+            
+            <h4>Grafana ConfigMap - k8s/monitoring/grafana-configmap.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasources
+  namespace: monitoring
+data:
+  prometheus.yaml: |
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      access: proxy
+      url: http://prometheus-service.monitoring.svc.cluster.local:9090
+      isDefault: true
+      editable: true
+            </div>
+
+            <h4>Grafana Deployment - k8s/monitoring/grafana-deployment.yaml</h4>
+            <div class="code-block">
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+      - name: grafana
+        image: grafana/grafana:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        env:
+        - name: GF_SECURITY_ADMIN_USER
+          value: "admin"
+        - name: GF_SECURITY_ADMIN_PASSWORD
+          value: "admin123"
+        - name: GF_SERVER_ROOT_URL
+          value: "http://grafana.medflow.local"
+        - name: GF_INSTALL_PLUGINS
+          value: "grafana-piechart-panel"
+        volumeMounts:
+        - name: grafana-storage
+          mountPath: /var/lib/grafana
+        - name: grafana-datasources
+          mountPath: /etc/grafana/provisioning/datasources
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: grafana-storage
+        emptyDir: {}
+      - name: grafana-datasources
+        configMap:
+          name: grafana-datasources
+            </div>
+
+            <h4>Grafana Service - k8s/monitoring/grafana-service.yaml</h4>
+            <div class="code-block">
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana-service
+  namespace: monitoring
+  labels:
+    app: grafana
+spec:
+  type: ClusterIP
+  selector:
+    app: grafana
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+            </div>
+
+            <h4>Grafana Ingress - k8s/monitoring/grafana-ingress.yaml</h4>
+            <div class="code-block">
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: grafana-ingress
+  namespace: monitoring
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: grafana.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana-service
+            port:
+              number: 80
+            </div>
+
+            <div class="success">
+                <strong>✅ Résumé :</strong> 25 fichiers YAML au total organisés par catégorie :
+                <ul>
+                    <li>2 fichiers de configuration (ConfigMap, Secret)</li>
+                    <li>6 Deployments (Backend, Frontend, Dashboard, MongoDB, Mongo Express, Prometheus, Grafana)</li>
+                    <li>7 Services (Backend, Frontend, Dashboard, MongoDB, Mongo Express, Prometheus, Grafana)</li>
+                    <li>1 StatefulSet (MongoDB)</li>
+                    <li>1 PVC (MongoDB)</li>
+                    <li>3 Ingress (MedFlow, Prometheus, Grafana)</li>
+                    <li>2 HPA (Backend, Frontend)</li>
+                    <li>3 ConfigMaps (MedFlow, Prometheus, Grafana)</li>
+                    <li>1 RBAC (Prometheus)</li>
+                </ul>
+            </div>
+        </div>
+
         <!-- PREREQUIS -->
         <div id="prerequis" class="section">
-            <h2>2. Prérequis</h2>
+            <h2>3. Prérequis</h2>
             <ul>
                 <li>✅ Docker Desktop installé et démarré</li>
                 <li>✅ Minikube installé</li>
@@ -299,11 +1386,44 @@ Namespace: monitoring
                 <li>✅ Node.js 18+ installé</li>
                 <li>✅ PowerShell (Windows) ou Terminal (Linux/Mac)</li>
             </ul>
+            
+            <div class="warning" style="margin-top: 20px;">
+                <strong>⚠️ Important - Docker Desktop :</strong>
+                <p><strong>Oui, Docker Desktop DOIT être démarré</strong> pour que tout fonctionne (Frontend, Backend, Dashboard).</p>
+                <p><strong>Pourquoi ?</strong></p>
+                <ul>
+                    <li>Minikube utilise Docker Desktop comme driver (<code>--driver=docker</code>)</li>
+                    <li>Minikube crée un conteneur Docker qui héberge le cluster Kubernetes</li>
+                    <li>Les images Docker sont construites et stockées dans Docker Desktop</li>
+                    <li>Les Pods Kubernetes s'exécutent dans des conteneurs Docker</li>
+                </ul>
+                <p><strong>Ordre de démarrage :</strong></p>
+                <ol>
+                    <li>1️⃣ Démarrer Docker Desktop (attendre qu'il soit complètement démarré)</li>
+                    <li>2️⃣ Démarrer Minikube : <code>minikube start --driver=docker</code></li>
+                    <li>3️⃣ Vérifier : <code>kubectl get pods -n medflow</code></li>
+                </ol>
+                <p><strong>Vérifier que Docker Desktop fonctionne :</strong></p>
+                <div class="command-box">
+                    <code>docker ps</code>
+                </div>
+                <p>Si cette commande fonctionne, Docker Desktop est opérationnel.</p>
+            </div>
+            
+            <div class="info-box" style="margin-top: 20px;">
+                <strong>💡 Alternative :</strong> Si vous ne voulez pas utiliser Docker Desktop, vous pouvez utiliser Minikube avec d'autres drivers :
+                <ul>
+                    <li><code>minikube start --driver=virtualbox</code> (nécessite VirtualBox)</li>
+                    <li><code>minikube start --driver=hyperv</code> (Windows avec Hyper-V)</li>
+                    <li><code>minikube start --driver=vmware</code> (nécessite VMware)</li>
+                </ul>
+                <p><strong>Note :</strong> Dans ce guide, nous utilisons Docker Desktop car c'est le plus simple et le plus courant.</p>
+            </div>
         </div>
 
         <!-- ETAPE 1 -->
         <div id="etape1" class="section">
-            <h2><span class="step-number">1</span>Démarrage de Minikube</h2>
+            <h2><span class="step-number">4</span>Démarrage de Minikube</h2>
             
             <h3>1.1 Démarrer Minikube</h3>
             <div class="command-box">
@@ -338,7 +1458,7 @@ Namespace: monitoring
 
         <!-- ETAPE 2 -->
         <div id="etape2" class="section">
-            <h2><span class="step-number">2</span>Configuration Backend - Health Check</h2>
+            <h2><span class="step-number">5</span>Configuration Backend - Health Check</h2>
             
             <h3>2.1 Ajouter l'Endpoint Health Check</h3>
             <p>Dans <code>backend/app.js</code>, ajoutez :</p>
@@ -387,7 +1507,7 @@ app.get("/api/v1/metrics", (req, res) => {
 
         <!-- ETAPE 3 -->
         <div id="etape3" class="section">
-            <h2><span class="step-number">3</span>Dockerfiles et Images Docker</h2>
+            <h2><span class="step-number">6</span>Dockerfiles et Images Docker</h2>
             
             <h3>3.1 Structure des Dockerfiles</h3>
             <p>Chaque composant a son propre Dockerfile :</p>
@@ -457,7 +1577,7 @@ server {
 
         <!-- ETAPE 4 -->
         <div id="etape4" class="section">
-            <h2><span class="step-number">4</span>Configuration Kubernetes - ConfigMap & Secrets</h2>
+            <h2><span class="step-number">7</span>Configuration Kubernetes - ConfigMap & Secrets</h2>
             
             <h3>4.1 Créer le ConfigMap</h3>
             <p>Créez <code>k8s/configmap.yaml</code> :</p>
@@ -525,7 +1645,7 @@ data:
 
         <!-- ETAPE 5 -->
         <div id="etape5" class="section">
-            <h2><span class="step-number">5</span>Deployments et Services</h2>
+            <h2><span class="step-number">8</span>Deployments et Services</h2>
             
             <h3>5.1 Backend Deployment</h3>
             <p>Créez <code>k8s/backend-deployment.yaml</code> :</p>
@@ -648,7 +1768,7 @@ spec:
 
         <!-- ETAPE 6 -->
         <div id="etape6" class="section">
-            <h2><span class="step-number">6</span>MongoDB - Base de Données</h2>
+            <h2><span class="step-number">9</span>MongoDB - Base de Données</h2>
             
             <h3>6.1 Créer le PersistentVolumeClaim</h3>
             <p>Créez <code>k8s/mongodb-pvc.yaml</code> :</p>
@@ -756,7 +1876,7 @@ spec:
 
         <!-- ETAPE 7 -->
         <div id="etape7" class="section">
-            <h2><span class="step-number">7</span>Ingress et Accès Externe</h2>
+            <h2><span class="step-number">10</span>Ingress et Accès Externe</h2>
             
             <h3>7.1 Activer l'Addon Ingress</h3>
             <div class="command-box">
@@ -853,7 +1973,7 @@ spec:
 
         <!-- ETAPE 8 -->
         <div id="etape8" class="section">
-            <h2><span class="step-number">8</span>HPA - Auto-scaling</h2>
+            <h2><span class="step-number">11</span>HPA - Auto-scaling</h2>
             
             <h3>8.1 Activer Metrics-Server</h3>
             <div class="command-box">
@@ -921,7 +2041,7 @@ spec:
 
         <!-- ETAPE 9 -->
         <div id="etape9" class="section">
-            <h2><span class="step-number">9</span>Monitoring - Prometheus & Grafana</h2>
+            <h2><span class="step-number">12</span>Monitoring - Prometheus & Grafana</h2>
             
             <h3>9.1 Créer le Namespace Monitoring</h3>
             <div class="command-box">
@@ -991,7 +2111,7 @@ spec:
 
         <!-- ETAPE 10 -->
         <div id="etape10" class="section">
-            <h2><span class="step-number">10</span>CI/CD Pipeline - GitHub Actions</h2>
+            <h2><span class="step-number">13</span>CI/CD Pipeline - GitHub Actions</h2>
             
             <h3>10.1 Structure du Pipeline</h3>
             <p>Le pipeline se trouve dans <code>.github/workflows/ci-cd.yml</code></p>
@@ -1028,7 +2148,7 @@ permissions:
 
         <!-- COMMANDES -->
         <div id="commandes" class="section">
-            <h2>13. Commandes de Vérification</h2>
+            <h2>14. Commandes de Vérification</h2>
             
             <h3>13.1 Commandes Générales</h3>
             <table>
@@ -1104,17 +2224,69 @@ permissions:
             </div>
 
             <h3>13.5 Test de Réplication (Auto-healing)</h3>
-            <div class="command-box">
-                <code>kubectl get pods -n medflow -l app=backend</code>
+            
+            <h4>Commandes pour tester les replicas (auto-healing)</h4>
+            <table>
+                <tr>
+                    <th>Étape</th>
+                    <th>Commande</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>1</td>
+                    <td><code>kubectl get pods -n medflow -l app=backend</code></td>
+                    <td>Lister les pods backend avant suppression</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td><code>kubectl delete pod &lt;pod-name&gt; -n medflow</code></td>
+                    <td>Supprimer un pod (remplacez &lt;pod-name&gt; par le nom réel)</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td><code>kubectl get pods -n medflow -l app=backend -w</code></td>
+                    <td>Observer en temps réel la recréation (dans un autre terminal)</td>
+                </tr>
+                <tr>
+                    <td>4</td>
+                    <td><code>kubectl get events -n medflow --sort-by='.lastTimestamp' | findstr backend</code></td>
+                    <td>Vérifier les événements de création/suppression</td>
+                </tr>
+                <tr>
+                    <td>5</td>
+                    <td><code>kubectl describe deployment backend-deployment -n medflow | findstr -i "replicas desired current"</code></td>
+                    <td>Vérifier l'état du deployment (replicas désirés vs actuels)</td>
+                </tr>
+            </table>
+
+            <h4>Commandes pour vérifier les replicas</h4>
+            <table>
+                <tr>
+                    <th>Commande</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>kubectl get deployment backend-deployment -n medflow -o jsonpath='{.spec.replicas}'</code></td>
+                    <td>Voir les replicas configurés (désirés)</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get deployment backend-deployment -n medflow -o jsonpath='{.status.replicas}'</code></td>
+                    <td>Voir les replicas actuels (en cours d'exécution)</td>
+                </tr>
+                <tr>
+                    <td><code>kubectl get deployment backend-deployment -n medflow -o jsonpath='{.status.readyReplicas}'</code></td>
+                    <td>Voir les replicas prêts (READY)</td>
+                </tr>
+            </table>
+
+            <div class="info-box" style="margin-top: 15px;">
+                <strong>💡 Exemple pratique :</strong><br>
+                <code>kubectl delete pod backend-deployment-867cdfdcff-f78cw -n medflow</code><br>
+                Puis observez avec : <code>kubectl get pods -n medflow -l app=backend -w</code>
             </div>
-            <div class="command-box">
-                <code>kubectl delete pod &lt;pod-name&gt; -n medflow</code>
-            </div>
-            <div class="command-box">
-                <code>kubectl get pods -n medflow -l app=backend -w</code>
-            </div>
+            
             <div class="explanation">
-                <strong>Explication :</strong> Après suppression d'un pod, Kubernetes en crée automatiquement un nouveau pour maintenir le nombre de replicas.
+                <strong>Explication :</strong> Après suppression d'un pod, Kubernetes détecte automatiquement qu'il manque un pod et en crée un nouveau pour maintenir le nombre de replicas configuré. C'est le mécanisme d'auto-healing (auto-guérison).
             </div>
 
             <h3>13.6 Test de Répartition de Charge</h3>
@@ -1265,11 +2437,118 @@ permissions:
             </div>
         </div>
 
+        <!-- GESTION IMAGES DOCKER -->
+        <div id="gestion-images" class="section">
+            <h2>17. Gestion des Images Docker</h2>
+            
+            <h3>17.1 Images Nécessaires pour MedFlow</h3>
+            <div class="info-box">
+                <strong>✅ Images à CONSERVER :</strong>
+                <ul>
+                    <li><code>medflow-backend:latest</code> - Backend de l'application</li>
+                    <li><code>medflow-frontend:latest</code> - Frontend patient</li>
+                    <li><code>medflow-dashboard:latest</code> - Dashboard admin</li>
+                    <li><code>gcr.io/k8s-minikube/kicbase:v0.0.48</code> - Image Minikube (NE PAS SUPPRIMER)</li>
+                    <li><code>mongo:7.0</code> - Base de données MongoDB (si utilisée)</li>
+                </ul>
+            </div>
+            
+            <div class="warning">
+                <strong>⚠️ Images à NE PAS SUPPRIMER :</strong>
+                <ul>
+                    <li><code>gcr.io/k8s-minikube/kicbase</code> - Utilisée par Minikube pour le cluster</li>
+                    <li>Toutes les images avec le préfixe <code>medflow-</code> - Nécessaires pour l'application</li>
+                </ul>
+            </div>
+
+            <h3>17.2 Lister les Images Docker</h3>
+            <div class="command-box">
+                <code>docker images</code>
+            </div>
+            <div class="command-box">
+                <code>docker images | findstr medflow</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Affiche toutes les images Docker disponibles. La deuxième commande filtre uniquement les images MedFlow.
+            </div>
+
+            <h3>17.3 Supprimer une Image Spécifique</h3>
+            <div class="command-box">
+                <code>docker rmi &lt;image-id&gt;</code>
+            </div>
+            <div class="command-box">
+                <code>docker rmi &lt;nom-image&gt;:&lt;tag&gt;</code>
+            </div>
+            <div class="explanation">
+                <strong>Exemple :</strong> Si vous avez une image <code>postgres:latest</code> qui n'est plus utilisée :
+                <div class="command-box">
+                    <code>docker rmi postgres:latest</code>
+                </div>
+            </div>
+
+            <h3>17.4 Supprimer les Images Inutilisées (Dangling)</h3>
+            <div class="command-box">
+                <code>docker image prune</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Supprime toutes les images "dangling" (sans tag, non utilisées). C'est une méthode sûre pour nettoyer.
+            </div>
+
+            <h3>17.5 Supprimer Toutes les Images Non Utilisées</h3>
+            <div class="warning">
+                <strong>⚠️ ATTENTION :</strong> Cette commande supprime TOUTES les images non utilisées par des conteneurs. Utilisez avec précaution !
+            </div>
+            <div class="command-box">
+                <code>docker image prune -a</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Supprime toutes les images qui ne sont pas utilisées par au moins un conteneur. Les images MedFlow en cours d'utilisation ne seront pas supprimées.
+            </div>
+
+            <h3>17.6 Vérifier les Images Utilisées par Kubernetes</h3>
+            <div class="command-box">
+                <code>kubectl get pods -n medflow -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}' | sort -u</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Affiche toutes les images Docker utilisées par les Pods Kubernetes dans le namespace medflow. Ne supprimez PAS ces images !
+            </div>
+
+            <h3>17.7 Nettoyage Complet (Images + Conteneurs + Volumes)</h3>
+            <div class="warning">
+                <strong>⚠️ TRÈS ATTENTION :</strong> Cette commande supprime TOUT (images, conteneurs arrêtés, réseaux, volumes non utilisés). À utiliser uniquement si vous voulez tout nettoyer.
+            </div>
+            <div class="command-box">
+                <code>docker system prune -a --volumes</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Nettoyage complet du système Docker. Ne supprime PAS les conteneurs en cours d'exécution ni les images utilisées.
+            </div>
+
+            <h3>17.8 Exemple de Nettoyage Sécurisé</h3>
+            <div class="success">
+                <strong>✅ Procédure recommandée :</strong>
+                <ol>
+                    <li>Vérifier les images utilisées : <code>docker images</code></li>
+                    <li>Vérifier les images Kubernetes : <code>kubectl get pods -n medflow -o jsonpath='{range .items[*]}{.spec.containers[*].image}{"\n"}{end}'</code></li>
+                    <li>Supprimer uniquement les images non listées ci-dessus</li>
+                    <li>Nettoyer les images dangling : <code>docker image prune</code></li>
+                </ol>
+            </div>
+
+            <h3>17.9 Espace Disque Libéré</h3>
+            <div class="command-box">
+                <code>docker system df</code>
+            </div>
+            <div class="explanation">
+                <strong>Explication :</strong> Affiche l'utilisation de l'espace disque par Docker (images, conteneurs, volumes, cache de build).
+            </div>
+        </div>
+
         <!-- RECONSTRUCTION IMAGES -->
         <div id="reconstruction" class="section">
-            <h2>17. Reconstruction des Images</h2>
+            <h2>18. Reconstruction des Images</h2>
             
-            <h3>17.1 Reconstruire les Images dans Minikube</h3>
+            <h3>18.1 Reconstruire les Images dans Minikube</h3>
             <p>Si vous devez reconstruire les images après modification du code :</p>
             <div class="command-box">
                 <code>minikube image build -t medflow-backend:latest ./backend</code>
@@ -1281,7 +2560,7 @@ permissions:
                 <code>minikube image build --build-arg VITE_API_BASE_URL=http://api.medflow.local/api/v1 -t medflow-dashboard:latest ./dashboard</code>
             </div>
 
-            <h3>17.2 Redémarrer les Deployments</h3>
+            <h3>18.2 Redémarrer les Deployments</h3>
             <div class="command-box">
                 <code>kubectl rollout restart deployment/backend-deployment -n medflow</code>
             </div>
@@ -1298,9 +2577,9 @@ permissions:
 
         <!-- TROUBLESHOOTING -->
         <div id="troubleshooting" class="section">
-            <h2>18. Dépannage</h2>
+            <h2>19. Dépannage</h2>
             
-            <h3>18.1 Pods en Erreur</h3>
+            <h3>19.1 Pods en Erreur</h3>
             <div class="command-box">
                 <code>kubectl describe pod &lt;pod-name&gt; -n medflow</code>
             </div>
@@ -1308,12 +2587,12 @@ permissions:
                 <code>kubectl logs &lt;pod-name&gt; -n medflow</code>
             </div>
 
-            <h3>18.2 Problème de Connexion MongoDB</h3>
+            <h3>19.2 Problème de Connexion MongoDB</h3>
             <div class="command-box">
                 <code>kubectl exec -n medflow mongodb-0 -- mongosh -u admin -p MedFlow2024Secure! --authenticationDatabase admin --eval "db.adminCommand('ping')"</code>
             </div>
 
-            <h3>18.3 Problème d'Ingress</h3>
+            <h3>19.3 Problème d'Ingress</h3>
             <div class="command-box">
                 <code>kubectl describe ingress medflow-ingress -n medflow</code>
             </div>
@@ -1321,7 +2600,7 @@ permissions:
                 <strong>Vérifier :</strong> Le tunnel Minikube doit être actif (<code>minikube tunnel</code>)
             </div>
 
-            <h3>18.4 HPA ne Fonctionne Pas</h3>
+            <h3>19.4 HPA ne Fonctionne Pas</h3>
             <div class="command-box">
                 <code>kubectl get pods -n kube-system | findstr metrics-server</code>
             </div>
@@ -1332,7 +2611,7 @@ permissions:
                 <code>Write-Host "Attente du démarrage de metrics-server..." ; Start-Sleep -Seconds 15 ; kubectl get pods -n kube-system | Select-String -Pattern "metrics-server"</code>
             </div>
 
-            <h3>18.5 Vérifier les Métriques HPA</h3>
+            <h3>19.5 Vérifier les Métriques HPA</h3>
             <div class="command-box">
                 <code>kubectl get hpa -n medflow -o wide</code>
             </div>
@@ -1383,6 +2662,274 @@ permissions:
                 <li>✅ Images Docker publiées dans GitHub Container Registry</li>
                 <li>✅ Build et tests automatisés</li>
             </ul>
+        </div>
+
+        <!-- GLOSSAIRE -->
+        <div id="glossaire" class="section">
+            <h2>20. Glossaire - Définitions des Notions</h2>
+            
+            <div class="info-box">
+                <strong>📚 Objectif :</strong> Cette section définit brièvement tous les concepts et technologies utilisés dans ce projet.
+            </div>
+
+            <h3>🔧 Concepts Kubernetes</h3>
+            
+            <h4>Pod</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Pod est la plus petite unité déployable dans Kubernetes. Il contient un ou plusieurs conteneurs qui partagent les mêmes ressources réseau et stockage. Les Pods sont éphémères et peuvent être créés, supprimés et recréés automatiquement.
+            </div>
+
+            <h4>Deployment</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Deployment gère un ensemble de Pods identiques (replicas). Il assure la mise à jour progressive, le rollback en cas d'erreur, et la création automatique de nouveaux Pods si l'un d'eux échoue. C'est la ressource recommandée pour déployer des applications stateless.
+            </div>
+
+            <h4>Service</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Service expose un ensemble de Pods comme un point d'accès réseau stable. Il fournit une adresse IP et un nom DNS qui restent constants même si les Pods changent. Types : ClusterIP (interne), NodePort (port sur le nœud), LoadBalancer (externe).
+            </div>
+
+            <h4>StatefulSet</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un StatefulSet gère des Pods avec une identité stable et un stockage persistant. Contrairement au Deployment, les Pods ont des noms ordonnés et prévisibles. Utilisé pour des applications stateful comme les bases de données (MongoDB, MySQL).
+            </div>
+
+            <h4>Namespace</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Namespace est un mécanisme d'isolation logique dans Kubernetes. Il permet de séparer les ressources (Pods, Services, etc.) en groupes virtuels, comme des dossiers dans un système de fichiers. Exemples : "medflow", "monitoring", "kube-system".
+            </div>
+
+            <h4>ConfigMap</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un ConfigMap stocke des données de configuration non sensibles sous forme de paires clé-valeur. Il permet de découpler la configuration de l'application du code, facilitant la gestion des environnements (dev, prod). Les valeurs sont injectées dans les Pods comme variables d'environnement.
+            </div>
+
+            <h4>Secret</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Secret stocke des données sensibles (mots de passe, clés API, tokens) de manière sécurisée. Les valeurs sont encodées en base64 (pas chiffrées, mais une pratique Kubernetes). Les Secrets sont montés dans les Pods comme volumes ou variables d'environnement.
+            </div>
+
+            <h4>PersistentVolumeClaim (PVC)</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un PVC est une demande de stockage persistant. Il permet aux Pods de réclamer du stockage sans connaître les détails du système de stockage sous-jacent. Le PVC est lié à un PersistentVolume (PV) qui fournit le stockage réel.
+            </div>
+
+            <h4>Ingress</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Ingress expose les Services HTTP/HTTPS à l'extérieur du cluster. Il fournit le routage basé sur le nom d'hôte (host) et le chemin (path), le SSL/TLS, et l'équilibrage de charge. Un contrôleur Ingress (comme Nginx) est nécessaire pour le faire fonctionner.
+            </div>
+
+            <h4>Horizontal Pod Autoscaler (HPA)</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> L'HPA ajuste automatiquement le nombre de Pods dans un Deployment ou StatefulSet en fonction de l'utilisation des ressources (CPU, mémoire) ou de métriques personnalisées. Il augmente les replicas en cas de charge élevée et les diminue quand la charge baisse.
+            </div>
+
+            <h4>ReplicaSet</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un ReplicaSet maintient un nombre stable de Pods répliqués. Il garantit qu'un nombre spécifique de Pods identiques fonctionne à tout moment. Les Deployments utilisent des ReplicaSets pour gérer les Pods.
+            </div>
+
+            <h4>ServiceAccount</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un ServiceAccount fournit une identité pour les Pods qui s'exécutent dans le cluster. Il est utilisé pour l'authentification et l'autorisation avec l'API Kubernetes. Chaque namespace a un ServiceAccount par défaut.
+            </div>
+
+            <h4>RBAC (Role-Based Access Control)</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> RBAC est un mécanisme de sécurité qui contrôle l'accès aux ressources Kubernetes. Il définit des rôles (permissions) et les associe à des utilisateurs ou ServiceAccounts via des RoleBindings ou ClusterRoleBindings.
+            </div>
+
+            <h3>🐳 Concepts Docker</h3>
+            
+            <h4>Dockerfile</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Dockerfile est un fichier texte contenant des instructions pour construire une image Docker. Il définit l'image de base, les dépendances, les fichiers à copier, les commandes à exécuter, et les ports à exposer.
+            </div>
+
+            <h4>Image Docker</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Une image Docker est un package immuable contenant une application et toutes ses dépendances. Elle sert de modèle pour créer des conteneurs. Les images sont stockées dans des registries (Docker Hub, GitHub Container Registry).
+            </div>
+
+            <h4>Conteneur</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un conteneur est une instance exécutable d'une image Docker. Il isole l'application et ses dépendances du système hôte, garantissant la portabilité et la cohérence entre les environnements.
+            </div>
+
+            <h3>☸️ Outils Kubernetes</h3>
+            
+            <h4>Minikube</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Minikube est un outil qui crée un cluster Kubernetes local à un seul nœud dans une machine virtuelle ou un conteneur Docker. Il est utilisé pour le développement, les tests et l'apprentissage de Kubernetes sans avoir besoin d'un cluster complet.
+            </div>
+
+            <h4>kubectl</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> kubectl est l'outil en ligne de commande officiel pour interagir avec un cluster Kubernetes. Il permet de créer, modifier, supprimer et inspecter les ressources Kubernetes (Pods, Services, Deployments, etc.).
+            </div>
+
+            <h4>Metrics-Server</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Metrics-Server collecte les métriques de ressources (CPU, mémoire) des nœuds et des Pods dans le cluster. Il est nécessaire pour que l'HPA fonctionne et pour utiliser la commande `kubectl top`.
+            </div>
+
+            <h3>📊 Monitoring</h3>
+            
+            <h4>Prometheus</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Prometheus est un système de monitoring et d'alerte open-source. Il collecte des métriques depuis les applications et les infrastructures, les stocke dans une base de données temporelle, et permet de créer des alertes basées sur des seuils.
+            </div>
+
+            <h4>Grafana</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Grafana est une plateforme de visualisation et d'analyse de données. Il se connecte à Prometheus (et d'autres sources) pour créer des tableaux de bord interactifs avec des graphiques, des alertes et des visualisations personnalisées.
+            </div>
+
+            <h4>PromQL</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> PromQL (Prometheus Query Language) est le langage de requête de Prometheus. Il permet d'interroger et d'agréger les métriques collectées pour créer des graphiques, des alertes et des analyses.
+            </div>
+
+            <h4>Health Check</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Health Check (sonde de santé) est un mécanisme qui vérifie périodiquement l'état d'un conteneur. Types : LivenessProbe (détecte si le conteneur est vivant), ReadinessProbe (détecte si le conteneur est prêt à recevoir du trafic), StartupProbe (détecte si le conteneur a démarré).
+            </div>
+
+            <h3>🔄 CI/CD</h3>
+            
+            <h4>CI/CD (Continuous Integration / Continuous Deployment)</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> CI/CD est une pratique DevOps qui automatise l'intégration du code, les tests, la construction des images Docker, et le déploiement. CI intègre le code fréquemment, CD déploie automatiquement les changements validés.
+            </div>
+
+            <h4>GitHub Actions</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> GitHub Actions est une plateforme d'automatisation intégrée à GitHub. Elle permet de créer des workflows (pipelines) qui s'exécutent automatiquement lors d'événements (push, pull request) pour tester, construire et déployer des applications.
+            </div>
+
+            <h4>GitHub Container Registry</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> GitHub Container Registry (ghcr.io) est un registre Docker intégré à GitHub. Il permet de stocker et partager des images Docker de manière privée ou publique, directement depuis les repositories GitHub.
+            </div>
+
+            <h3>🗄️ Base de Données</h3>
+            
+            <h4>MongoDB</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> MongoDB est une base de données NoSQL orientée documents. Elle stocke les données sous forme de documents JSON (BSON), offrant flexibilité et scalabilité horizontale. Utilisée pour les applications nécessitant un schéma flexible.
+            </div>
+
+            <h4>MongoDB Express</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> MongoDB Express (mongo-express) est une interface web pour gérer MongoDB. Il fournit une interface graphique pour visualiser, créer, modifier et supprimer des bases de données, collections et documents.
+            </div>
+
+            <h4>MongoDB Compass</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> MongoDB Compass est l'interface graphique officielle de MongoDB. C'est une application desktop qui permet de visualiser et manipuler les données MongoDB, analyser les schémas, et optimiser les performances.
+            </div>
+
+            <h3>🌐 Réseau</h3>
+            
+            <h4>ClusterIP</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> ClusterIP est le type de Service par défaut dans Kubernetes. Il expose le Service sur une IP interne au cluster, accessible uniquement depuis les Pods du cluster. C'est le type le plus sécurisé pour les services internes.
+            </div>
+
+            <h4>NodePort</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> NodePort expose le Service sur un port statique de chaque nœud du cluster. Accessible depuis l'extérieur via `<NodeIP>:<NodePort>`. Utilisé pour le développement et les tests, moins sécurisé en production.
+            </div>
+
+            <h4>LoadBalancer</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> LoadBalancer expose le Service via un équilibreur de charge externe fourni par le cloud provider (AWS ELB, GCP Load Balancer, Azure Load Balancer). Crée automatiquement un équilibreur de charge externe.
+            </div>
+
+            <h4>Headless Service</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Headless Service (clusterIP: None) ne fournit pas d'IP de cluster. Il retourne directement les IPs des Pods, permettant la découverte DNS directe. Utilisé pour les StatefulSets et les applications nécessitant une connexion directe aux Pods.
+            </div>
+
+            <h3>📦 Ressources et Limites</h3>
+            
+            <h4>Resource Requests</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Les Resource Requests définissent la quantité minimale de CPU et de mémoire garantie pour un conteneur. Kubernetes utilise ces valeurs pour planifier les Pods sur les nœuds ayant suffisamment de ressources disponibles.
+            </div>
+
+            <h4>Resource Limits</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Les Resource Limits définissent la quantité maximale de CPU et de mémoire qu'un conteneur peut utiliser. Si un conteneur dépasse ses limites, il peut être arrêté ou throttlé (ralenti) par Kubernetes.
+            </div>
+
+            <h3>🔄 Stratégies de Déploiement</h3>
+            
+            <h4>Rolling Update</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Rolling Update est une stratégie de déploiement qui met à jour les Pods progressivement, un par un ou par petits groupes. Elle garantit une disponibilité continue de l'application pendant la mise à jour, sans interruption de service.
+            </div>
+
+            <h4>Rollback</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Un Rollback est le retour à une version précédente d'un déploiement en cas d'erreur. Kubernetes stocke l'historique des déploiements, permettant de revenir rapidement à une version stable avec `kubectl rollout undo`.
+            </div>
+
+            <h3>🔐 Sécurité</h3>
+            
+            <h4>Base64 Encoding</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Base64 est un encodage (pas un chiffrement) qui convertit des données binaires en texte ASCII. Utilisé dans les Secrets Kubernetes pour stocker des valeurs sensibles. Note : ce n'est pas sécurisé, juste une pratique Kubernetes.
+            </div>
+
+            <h4>JWT (JSON Web Token)</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> JWT est un standard pour transmettre des informations de manière sécurisée entre parties. Il contient des claims (revendications) signés numériquement, utilisé pour l'authentification et l'autorisation dans les applications web.
+            </div>
+
+            <h3>🌍 Accès et Routage</h3>
+            
+            <h4>Port-Forward</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Port-Forward (`kubectl port-forward`) redirige un port local vers un port d'un Pod ou Service dans le cluster. Permet d'accéder temporairement à un service depuis la machine locale, utile pour le développement et le débogage.
+            </div>
+
+            <h4>Minikube Tunnel</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Minikube Tunnel crée une route réseau entre la machine hôte et le cluster Minikube. Il permet d'exposer les Services de type LoadBalancer et de faire fonctionner l'Ingress en local, en routant le trafic vers les Services Kubernetes.
+            </div>
+
+            <h4>Hosts File</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Le fichier hosts (`/etc/hosts` sur Linux/Mac, `C:\Windows\System32\drivers\etc\hosts` sur Windows) mappe des noms de domaine à des adresses IP localement. Permet de résoudre des domaines personnalisés (comme `medflow.local`) sans serveur DNS.
+            </div>
+
+            <h3>📈 Métriques et Performance</h3>
+            
+            <h4>Scaling Horizontal</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Le Scaling Horizontal (scale out) consiste à augmenter le nombre d'instances (Pods) pour gérer plus de charge. Plus flexible et résilient que le scaling vertical (augmenter les ressources d'une instance).
+            </div>
+
+            <h4>Scaling Vertical</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Le Scaling Vertical (scale up) consiste à augmenter les ressources (CPU, mémoire) d'une instance existante. Moins flexible que le scaling horizontal, mais parfois nécessaire pour certaines applications.
+            </div>
+
+            <h4>Auto-healing</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> L'Auto-healing (auto-guérison) est la capacité de Kubernetes à détecter automatiquement les Pods défaillants et à les recréer. Assure la haute disponibilité en maintenant le nombre désiré de Pods fonctionnels.
+            </div>
+
+            <h4>Load Balancing</h4>
+            <div class="explanation">
+                <strong>Définition :</strong> Le Load Balancing (équilibrage de charge) distribue le trafic réseau entre plusieurs instances (Pods) d'une application. Les Services Kubernetes répartissent automatiquement les requêtes entre les Pods disponibles, améliorant les performances et la disponibilité.
+            </div>
+
+            <div class="success" style="margin-top: 30px;">
+                <strong>✅ Glossaire Complet</strong><br>
+                Toutes les notions importantes du projet MedFlow sont définies. Utilisez cette section comme référence rapide pour comprendre les concepts Kubernetes, Docker, et DevOps utilisés.
+            </div>
         </div>
 
         <div style="text-align: center; margin-top: 50px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
