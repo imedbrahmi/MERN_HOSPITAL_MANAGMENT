@@ -1,5 +1,10 @@
 name: CI/CD Pipeline - MedFlow
 
+# Permissions pour GitHub Container Registry
+permissions:
+  contents: read
+  packages: write
+
 # Déclencheurs du pipeline
 on:
   push:
