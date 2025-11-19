@@ -141,8 +141,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Cache désactivé pour simplifier (peut être réactivé plus tard avec docker-container driver)
       
       - name: 🏗️ Build Frontend Image
         if: matrix.component == 'frontend'
@@ -154,8 +153,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL || 'http://api.medflow.local/api/v1' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Cache désactivé pour simplifier (peut être réactivé plus tard avec docker-container driver)
       
       - name: 🏗️ Build Dashboard Image
         if: matrix.component == 'dashboard'
@@ -167,8 +165,7 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL || 'http://api.medflow.local/api/v1' }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Cache désactivé pour simplifier (peut être réactivé plus tard avec docker-container driver)
 
   # ============================================
   # JOB 3: Déploiement sur Kubernetes
