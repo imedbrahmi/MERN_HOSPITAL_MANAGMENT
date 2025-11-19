@@ -44,5 +44,17 @@ spec:
             name: frontend-service
             port:
               number: 80
+  
+  # Route pour MongoDB Express (Interface de gestion de la base de données)
+  - host: mongo.medflow.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mongo-express-service
+            port:
+              number: 80
 
 

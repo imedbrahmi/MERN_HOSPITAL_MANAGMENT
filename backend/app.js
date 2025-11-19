@@ -49,6 +49,52 @@ app.get("/api/v1/health", (req, res) => {
     });
 });
 
+// Metrics endpoint for Prometheus
+app.get("/api/v1/metrics", (req, res) => {
+    // Utiliser process global (disponible dans Node.js)
+    const memUsage = process.memoryUsage();
+    const cpuUsage = process.cpuUsage();
+    const uptime = process.uptime();
+    
+    // Métriques basiques au format Prometheus
+    const metrics = [
+        `# HELP nodejs_heap_size_total_bytes Process heap size from Node.js`,
+        `# TYPE nodejs_heap_size_total_bytes gauge`,
+        `nodejs_heap_size_total_bytes ${memUsage.heapTotal}`,
+        ``,
+        `# HELP nodejs_heap_size_used_bytes Process heap size used from Node.js`,
+        `# TYPE nodejs_heap_size_used_bytes gauge`,
+        `nodejs_heap_size_used_bytes ${memUsage.heapUsed}`,
+        ``,
+        `# HELP nodejs_external_memory_bytes Node.js external memory`,
+        `# TYPE nodejs_external_memory_bytes gauge`,
+        `nodejs_external_memory_bytes ${memUsage.external}`,
+        ``,
+        `# HELP nodejs_rss_memory_bytes Resident set size`,
+        `# TYPE nodejs_rss_memory_bytes gauge`,
+        `nodejs_rss_memory_bytes ${memUsage.rss}`,
+        ``,
+        `# HELP nodejs_cpu_user_seconds_total Total user CPU time spent in seconds`,
+        `# TYPE nodejs_cpu_user_seconds_total counter`,
+        `nodejs_cpu_user_seconds_total ${cpuUsage.user / 1000000}`,
+        ``,
+        `# HELP nodejs_cpu_system_seconds_total Total system CPU time spent in seconds`,
+        `# TYPE nodejs_cpu_system_seconds_total counter`,
+        `nodejs_cpu_system_seconds_total ${cpuUsage.system / 1000000}`,
+        ``,
+        `# HELP medflow_uptime_seconds Uptime in seconds`,
+        `# TYPE medflow_uptime_seconds gauge`,
+        `medflow_uptime_seconds ${uptime}`,
+        ``,
+        `# HELP medflow_http_requests_total Total number of HTTP requests`,
+        `# TYPE medflow_http_requests_total counter`,
+        `medflow_http_requests_total 0`,
+    ].join('\n');
+    
+    res.set('Content-Type', 'text/plain; version=0.0.4');
+    res.send(metrics);
+});
+
 // Test endpoint to verify deployment
 app.get("/api/v1/test", (req, res) => {
     res.json({ 
