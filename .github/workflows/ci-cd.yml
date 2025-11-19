@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main          # Déclenche sur push vers main
+      - master        # Déclenche sur push vers master
       - develop       # Déclenche sur push vers develop
   pull_request:
     branches:
